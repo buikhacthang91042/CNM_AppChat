@@ -3,44 +3,85 @@ import { FontAwesome } from '@expo/vector-icons';
 import {useNavigation}  from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import * as Facebook from 'expo-facebook';
+import { FacebookAuthProvider, signInWithCredential } from 'firebase/auth';
+import { auth } from '../../Config/FirebaseConfig';
+import * as AuthSession from 'expo-auth-session';
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
 export function Login() {
   const navigation = useNavigation();
-  console.log('Facebook module:', Facebook);
-  useEffect(() => {
-    const initializeFacebook = async () => {
-      try {
-        await Facebook.initializeAsync({
-          appId: '936536687968621', 
-          appName: 'AppChatMobile'
-        });
-        console.log('Facebook SDK initialized successfully');
-      } catch (error) {
-        console.error('Error initializing Facebook SDK:', error);
-      }
-    };
+  const androidClientId = '151045395656-fnhdl7jdhhps8feuuvs8mp6gjtn61s24.apps.googleusercontent.com';
+  const webClientId = '151045395656-hs6lb1ibgl6ut1f0g05183fh3h0u8oi0.apps.googleusercontent.com';
+  const iosClientId = '151045395656-0rb6c41k4fq2lp9247fp1brscr2inl62.apps.googleusercontent.com';
+  WebBrowser.maybeCompleteAuthSession();
+ 
 
-    initializeFacebook();
-  }, []); // Chỉ chạy một lần khi component được mount
+   // Nó sẽ in ra https://auth.expo.io/@your-username/your-app-slug
+  
+
 
   // Hàm xử lý đăng nhập
-  const handleLogin = async () => {
-    try {
-      const { type, token } = await Facebook.logInWithReadPermissionsAsync({
-        permissions: ['public_profile', 'email'],
-      });
 
-      if (type === 'success') {
-        console.log('Login success, token:', token);
-        // Điều hướng sau khi đăng nhập thành công
-        navigation.navigate('SwiperProfile');
-      } else {
-        console.log('Login failed or canceled');
-      }
-    } catch (error) {
-      console.error('Error during login:', error);
+ 
+  const redirectUri = AuthSession.makeRedirectUri({
+    
+    native: "AppChatMobile://auth", 
+  });
+  
+  const config = {
+    webClientId,
+    iosClientId,
+    androidClientId,
+    redirectUri,
+  };
+  
+  const [request, response, promptAsync] = Google.useAuthRequest(config);
+  
+  const handleToken = () => {
+    if (response?.type === "success") {
+      const { authentication } = response;
+      const token = authentication?.accessToken;
+      console.log("Access token:", token);
+    } else if (response?.type === "error") {
+      console.log("Authentication error:", response.error);
     }
   };
+  
+  useEffect(() => {
+    handleToken();
+    console.log("🔗 Redirect URI:", redirectUri);
+  }, [response]);
+    console.log("🔗 Redirect URI:", AuthSession.makeRedirectUri({ useProxy: true }));
 
+
+  const handleLoginByFacebook = async () => {
+    try {
+      if (!Facebook.initializeAsync) {
+        console.error("Facebook SDK not initialized correctly");
+        return;
+      }
+  
+      await Facebook.initializeAsync({
+        appId: "698245142865922"
+      });
+  
+      const result = await Facebook.logInWithReadPermissionsAsync({
+        permissions: ["public_profile", "email"],
+      });
+  
+      if (result.type === "success") {
+        const { token } = result;
+        const credential = FacebookAuthProvider.credential(token);
+        const userCredential = await signInWithCredential(auth, credential);
+        console.log("User logged in Firebase:", userCredential.user);
+      } else {
+        console.log("Facebook login cancelled");
+      }
+    } catch (error) {
+      console.log("Facebook Login Error:", error);
+    }
+  };
+  
   const handleLoginByAccout = async () => {
     navigation.navigate('LoginScreen');
   }
@@ -58,7 +99,7 @@ export function Login() {
       <View style={styles.buttonLogin}>
         {/* Apple Button */}
       <TouchableOpacity 
-      
+        onPress={() => promptAsync()}
       style={[styles.button, styles.appleButton]}>
         <FontAwesome name="google" size={24} color="white" style={styles.icon} />
         <Text style={styles.buttonText}>Continue with Google</Text>
@@ -66,7 +107,7 @@ export function Login() {
 
       {/* Facebook Button */}
       <TouchableOpacity 
-      onPress={handleLogin}
+      onPress={handleLoginByFacebook}
       style={[styles.button, styles.facebookButton]}>
         <FontAwesome name="facebook" size={24} color="white" style={styles.icon} />
         <Text style={styles.buttonText}>Continue with Facebook</Text>

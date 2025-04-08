@@ -1,24 +1,24 @@
 // Config/FirebaseConfig.js
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, FacebookAuthProvider, signInWithCredential } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 // (nếu cần) import thêm các service khác, ví dụ Storage:
 // import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAgwUI1kQ7sN1r9cOaBizajEET7aTHUItI",
-  authDomain: "fooddeliverytt-cef6b.firebaseapp.com",
-  projectId: "fooddeliverytt-cef6b",
-  storageBucket: "fooddeliverytt-cef6b.firebasestorage.app",
-  messagingSenderId: "181896806972",
-  appId: "1:181896806972:web:97b0de26f15df92e4fb939",
-  measurementId: "G-55SKS3TB0V"
+  apiKey: "AIzaSyCdRluFaVDQSLvdOGEHkn_Nx1kL2YcSxWY",
+  authDomain: "chatapp-e5c71.firebaseapp.com",
+  projectId: "chatapp-e5c71",
+  storageBucket: "chatapp-e5c71.firebasestorage.app",
+  messagingSenderId: "671237788706",
+  appId: "1:671237788706:web:4d398a3d663f3557c4e67b",
+  measurementId: "G-FTNL9LLP4P"
 };
 
 // Khởi tạo app
 const app = initializeApp(firebaseConfig);
 
 // Export các instance
-export const auth = getAuth(app);
-export const firestore = getFirestore(app);
-// (nếu cần) export const storage = getStorage(app);
+const auth = getAuth(app);
+const firestore = getFirestore(app);
+export { auth, firestore, FacebookAuthProvider, signInWithCredential };
