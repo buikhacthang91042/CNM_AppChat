@@ -23,10 +23,18 @@ export function Login() {
   // Hàm xử lý đăng nhập
 
  
-  const redirectUri = AuthSession.makeRedirectUri({
-    
-    native: "AppChatMobile://auth", 
-  });
+  type CustomRedirectUriOptions = {
+    native?: string;
+    scheme?: string;
+    path?: string;
+    preferLocalhost?: boolean;
+    isTripleSlashed?: boolean;
+    useProxy?: boolean;
+  };
+  
+  const redirectUri = `https://auth.expo.io/@thang260903/AppChatMobile`;
+
+  
   
   const config = {
     webClientId,
@@ -51,7 +59,7 @@ export function Login() {
     handleToken();
     console.log("🔗 Redirect URI:", redirectUri);
   }, [response]);
-    console.log("🔗 Redirect URI:", AuthSession.makeRedirectUri({ useProxy: true }));
+    
 
 
   const handleLoginByFacebook = async () => {
