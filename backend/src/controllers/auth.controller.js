@@ -11,7 +11,10 @@ const sendSignupOTP = async (req, res) => {
   if (!phone) {
     return res.status(400).json({ message: "Thiếu số điện thoại!" });
   }
-
+  // Định dạng số điện thoại: bỏ số 0 đầu, thêm +84
+  if (!phone.startsWith("+")) {
+    phone = `+84${phone.replace(/^0/, "")}`;
+  }
   try {
     await client.verify.v2.services(serviceSid)
       .verifications.create({ to: phone, channel: 'sms' });
@@ -96,16 +99,23 @@ const verifyAndSignup = async (req, res) => {
 };
 
 // 📌 Đăng nhập
+// 📌 Đăng nhập
 const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { phone, password } = req.body;
 
   try {
-    if (!email || !password) {
-      return res.status(400).json({ message: "Vui lòng điền email và mật khẩu" });
+    if (!phone || !password) {
+      return res.status(400).json({ message: "Vui lòng điền số điện thoại và mật khẩu" });
     }
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ message: "Email không tồn tại" });
+    // Định dạng số điện thoại nếu cần
+    let formattedPhone = phone;
+    if (!phone.startsWith("+")) {
+      formattedPhone = `+84${phone.replace(/^0/, "")}`;
+    }
+
+    const user = await User.findOne({ phone: formattedPhone });
+    if (!user) return res.status(401).json({ message: "Số điện thoại không tồn tại" });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: "Mật khẩu không đúng" });
@@ -124,13 +134,14 @@ const login = async (req, res) => {
       createAt: user.createAt,
     };
 
-    if (clientType === 'web') {
-      res.status(200).json({ message: "Đăng nhập thành công (Web)", user: userData });
-    } else {
-      res.status(200).json({ message: "Đăng nhập thành công (Mobile)", token, user: userData });
-    }
-
+    // Trả về token cho cả web và mobile
+    res.status(200).json({
+      message: `Đăng nhập thành công (${clientType})`,
+      token,
+      user: userData,
+    });
   } catch (error) {
+    console.error("Lỗi đăng nhập:", error); // Thêm log để debug
     res.status(500).json({ message: "Lỗi máy chủ khi đăng nhập" });
   }
 };
