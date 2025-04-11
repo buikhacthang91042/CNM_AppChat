@@ -15,7 +15,9 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    login(formData);
+    // Định dạng số điện thoại trước khi gửi: thêm +84, bỏ số 0 đầu
+    const formattedPhone = `+84${formData.phone.replace(/^0/, "")}`;
+    login({ ...formData, phone: formattedPhone });
   };
 
   return (
