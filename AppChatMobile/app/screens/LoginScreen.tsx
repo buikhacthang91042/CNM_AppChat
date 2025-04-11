@@ -13,26 +13,17 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Formik } from "formik";
-import { auth, firestore } from "../../Config/FirebaseConfig";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import {
-  doc,
-  setDoc,
-  collection,
-  query,
-  where,
-  getDocs,
-} from "firebase/firestore";
-
 import * as SplashScreen from "expo-splash-screen";
 import { useFonts } from "expo-font";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import socket from '../config/socket'; 
 export default function LoginScreen() {
   const [fontsLoaded] = useFonts({
     Lobster: require("../assets/fonts/Lobster-Regular.ttf"),
   });
   const navigation = useNavigation();
-
+  const [userId, setUserId] = useState(null);
   const [showPass, setShowPass] = useState(false);
 
   const email = useRef(null);
@@ -47,41 +38,48 @@ export default function LoginScreen() {
 
     prepare();
   }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const handleConnect = () => {
+      socket.emit("register", userId);
+      console.log("✅ Đã gửi register socket:", userId);
+    };
+
+    socket.on("connect", handleConnect);
+
+    return () => {
+      socket.off("connect", handleConnect); // cleanup
+    };
+  }, [userId]);
   async function signIn(data) {
-    const { email: phoneInput, password } = data;
+    const { phone, password } = data;
 
     try {
-      // 1. Tìm email theo số điện thoại
-      const q = query(
-        collection(firestore, "UserData"),
-        where("phone", "==", phoneInput)
+      const response = await axios.post(
+        "http://192.168.1.11:5000/api/auth/login",
+        {
+          phone,
+          password,
+        }
       );
-      const querySnapshot = await getDocs(q);
+      const token = response.data;
+     
+      await AsyncStorage.setItem("token",JSON.stringify(token));
+      const userId = token.user.id;
+      setUserId(userId);
+      
+      
+       console.log("Đã gửi register socket:", userId);
+      console.log("Đăng nhập thành công:", response.data);
 
-      if (querySnapshot.empty) {
-        Alert.alert("Không tìm thấy số điện thoại", "Vui lòng kiểm tra lại.");
-        return;
-      }
-
-      // 2. Lấy email từ kết quả truy vấn
-      const userData = querySnapshot.docs[0].data();
-      const email = userData.email;
-
-      // 3. Đăng nhập bằng email & password
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const user = userCredential.user;
-      if (user) {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "HomeTabs" }],
-        });
-      }
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "HomeTabs" }],
+      });
     } catch (error) {
-      console.log("Lỗi đăng nhập:", error);
+      console.log("Lỗi đăng nhập:", error.message);
       Alert.alert("Tài khoản hoặc mật khẩu không đúng", "Vui lòng thử lại.");
     }
   }
@@ -105,7 +103,7 @@ export default function LoginScreen() {
             <Text style={style.title3}>Đăng nhập vào tài khoản của bạn</Text>
           </View>
           <Formik
-            initialValues={{ email: "", password: "" }}
+            initialValues={{ phone: "", password: "" }}
             onSubmit={(value) => {
               signIn(value);
             }}
@@ -119,8 +117,8 @@ export default function LoginScreen() {
                       style={style.input}
                       placeholder="Nhập số điện thoại của bạn"
                       keyboardType="phone-pad"
-                      onChangeText={props.handleChange("email")}
-                      value={props.values.email}
+                      onChangeText={props.handleChange("phone")}
+                      value={props.values.phone}
                     />
                   </View>
                   <View style={style.content2}>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useCallback   } from "react";
 import {
   View,
   Text,
@@ -8,41 +8,103 @@ import {
   StyleSheet,
   SafeAreaView,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { auth, firestore } from "../../Config/FirebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import * as ImagePicker from "expo-image-picker";
 
+const CLOUDINARY_UPLOAD_PRESET = "ml_default";
+const CLOUDINARY_CLOUD_NAME = "dbjqhaayj";
+const CLOUDINARY_API =
+  `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 const AccountScreen = () => {
   const navigation = useNavigation();
   const [userInfo, setUserInfo] = useState({
     name: "",
     email: "",
     phone: "",
+    dob: "",
+    gender: "",
+    avatar: "",
   });
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        console.log("🔥 User UID:", user.uid);
-        const docRef = doc(firestore, "UserData", user.uid);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          setUserInfo(docSnap.data());
-        } else {
-          console.log("No user data found!");
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUserInfo = async () => {
+        try {
+          const token = await AsyncStorage.getItem("token");
+          const parsedToken = JSON.parse(token);
+          if (!parsedToken) return;
+  
+          const response = await axios.get(
+            "http://192.168.1.11:5000/api/auth/me",
+            {
+              headers: {
+                Authorization: `Bearer ${parsedToken.token}`,
+              },
+            }
+          );
+          setUserInfo(response.data);
+        } catch (error) {
+          console.error("Error fetching user info:", error.message);
         }
-      }
-    };
+      };
+  
+      fetchUserInfo();
+    }, [])
+  );
+  
 
-    fetchUserInfo();
-  }, []);
+  const pickImageAndUpload = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+
+      if (!result.canceled) {
+        const image = result.assets[0];
+        const formData = new FormData();
+        const localUri = image.uri;
+        const filename = localUri.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename ?? '');
+        const fileType = match ? `image/${match[1]}` : `image`;
+        formData.append("file", {
+          uri: image.uri,
+          type: fileType,
+          name: "avatar.jpg",
+        });
+        formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+        const uploadRes = await axios.post(CLOUDINARY_API, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        const imageUrl = uploadRes.data.secure_url;
+
+        const token = await AsyncStorage.getItem("token");
+        const parsedToken = JSON.parse(token);
+        await axios.put(
+          "http://192.168.1.11:5000/api/auth/me/update",
+          { avatar: imageUrl },
+          {
+            headers: { Authorization: `Bearer ${parsedToken.token}` },
+          }
+        );
+        setUserInfo((prev) => ({ ...prev, avatar: imageUrl }));
+      }
+    } catch (error) {
+      console.error("Upload ảnh lỗi:", error.message);
+      if (error.response) {
+        console.log("Chi tiết lỗi:", error.response.data);
+      }
+    }
+  };
 
   const handleLogout = async () => {
     try {
-      await auth.signOut();
+      await AsyncStorage.removeItem("token");
       navigation.reset({
         index: 0,
         routes: [{ name: "LoginScreen" }],
@@ -56,21 +118,30 @@ const AccountScreen = () => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
         <View style={styles.profileSection}>
-          <Image
-            source={require("../../assets/adaptive-icon.png")}
-            style={styles.avatar}
-          />
+          <TouchableOpacity onPress={pickImageAndUpload}>
+            <Image
+              source={
+                userInfo.avatar
+                  ? { uri: userInfo.avatar }
+                  : require("../../assets/adaptive-icon.png")
+              }
+              style={styles.avatar}
+            />
+          </TouchableOpacity>
+
           <View style={styles.infoContainer}>
             <Text style={styles.name}>{userInfo.name}</Text>
-            <Text style={styles.info}>📧 {userInfo.email}</Text>
-            <Text style={styles.info}>📱 {userInfo.phone}</Text>
+            <Text style={styles.info}> {userInfo.email}</Text>
+            <Text style={styles.info}> {userInfo.phone}</Text>
+            <Text style={styles.info}> {userInfo.gender}</Text>
+            <Text style={styles.info}> {userInfo.dob}</Text>
           </View>
         </View>
 
         <View style={styles.buttonSection}>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.navigate("EditProfileScreen")}
+            onPress={() => navigation.navigate("EditProfileScreen",{ userInfo })}
           >
             <MaterialIcons name="edit" size={24} color="#FFA500" />
             <Text style={styles.buttonText}>Chỉnh sửa thông tin</Text>

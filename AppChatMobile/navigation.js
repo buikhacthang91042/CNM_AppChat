@@ -1,7 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import React from 'react';
+import React ,{ useEffect }from 'react';
 
 import Inbox from './app/screens/Inbox';
 import { Login } from './app/screens/Login';
@@ -12,12 +12,30 @@ import Memory from './app/screens/Memory';
 import Contact from './app/screens/Contact';
 import LoginScreen from './app/screens/LoginScreen';
 import {ForgotPasswordScreen} from './app/screens/ForgotPasswordScreen';
+import EditProfileScreen from './app/screens/EditProfileScreen';
+import UpdatePassword from './app/screens/UpdatePassword';
+import AddFriend from './app/screens/AddFriendScreen';
+import UserProfile from './app/screens/UserProfileScreen';
 import Icon from "react-native-vector-icons/Ionicons";
+import socket from './app/config/socket'; 
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 export default function Navigation() {
+  useEffect(() => {
+    
+    socket.on('new_friend_request', (data) => {
+      console.log("Lời mời kết bạn mới:", data);
+      Alert.alert("Bạn có lời mời kết bạn mới", `${data.request.sender.name}`);
+    });
+
+   
+    return () => {
+      socket.off('new_friend_request');
+    };
+  }, []);
+
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -26,6 +44,10 @@ export default function Navigation() {
         <Stack.Screen name="HomeTabs" component={HomeTabs} />
         <Stack.Screen name="LoginScreen" component={LoginScreen} />
         <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
+        <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
+        <Stack.Screen name="UpdatePassword" component={UpdatePassword} />
+        <Stack.Screen name="AddFriend" component={AddFriend} />
+        <Stack.Screen name="UserProfile" component={UserProfile} />
       </Stack.Navigator>
     </NavigationContainer>
   );

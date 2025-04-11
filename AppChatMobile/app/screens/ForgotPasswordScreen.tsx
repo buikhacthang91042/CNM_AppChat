@@ -9,7 +9,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '../../Config/FirebaseConfig';
+
 
 export function ForgotPasswordScreen({ navigation }) {
   const [email, setEmail] = useState('');

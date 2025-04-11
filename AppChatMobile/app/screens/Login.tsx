@@ -3,8 +3,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import {useNavigation}  from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import * as Facebook from 'expo-facebook';
-import { FacebookAuthProvider, signInWithCredential } from 'firebase/auth';
-import { auth } from '../../Config/FirebaseConfig';
+
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
@@ -105,7 +104,7 @@ export function Login() {
         </Text>
       </View>
       <View style={styles.buttonLogin}>
-        {/* Apple Button */}
+       
       <TouchableOpacity 
         onPress={() => promptAsync()}
       style={[styles.button, styles.appleButton]}>
@@ -113,7 +112,7 @@ export function Login() {
         <Text style={styles.buttonText}>Continue with Google</Text>
       </TouchableOpacity>
 
-      {/* Facebook Button */}
+      
       <TouchableOpacity 
       onPress={handleLoginByFacebook}
       style={[styles.button, styles.facebookButton]}>
@@ -121,7 +120,7 @@ export function Login() {
         <Text style={styles.buttonText}>Continue with Facebook</Text>
       </TouchableOpacity>
 
-      {/* Phone Number Button */}
+      
       <TouchableOpacity 
       onPress={() => handleLoginByAccout()}
       style={[styles.button, styles.phoneButton]}>

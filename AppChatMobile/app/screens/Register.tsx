@@ -1,13 +1,5 @@
 import { Formik } from "formik";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import {
-  query,
-  collection,
-  getDocs,
-  where,
-  doc,
-  setDoc,
-} from "firebase/firestore";
+import * as Yup from "yup";
 import React, { useState } from "react";
 import {
   StyleSheet,
@@ -21,8 +13,6 @@ import {
   Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { auth, firestore } from "../../Config/FirebaseConfig";
-import * as Yup from "yup";
 import axios from "axios";
 
 export function Register() {
@@ -33,7 +23,7 @@ export function Register() {
   const [verifying, setVerifying] = useState(false);
 
   const validationSchema = Yup.object().shape({
-    ten: Yup.string()
+    name: Yup.string()
       .required("Vui lòng nhập tên")
       .min(3, "Tên phải nhiều hơn 3 kí tự"),
     email: Yup.string()
@@ -45,90 +35,60 @@ export function Register() {
     password: Yup.string()
       .required("Vui lòng nhập mật khẩu")
       .min(6, "Mật khẩu phải ít nhất 6 ký tự"),
+    dob: Yup.string().required("Vui lòng nhập ngày sinh"),
+    gender: Yup.string().required("Vui lòng chọn giới tính"),
   });
 
   const sendOTP = async (values) => {
-    const { ten, email, phone, password } = values;
-
     try {
-      const userRef = collection(firestore, "UserData");
-      const phoneQuery = query(userRef, where("phone", "==", phone));
-      const querySnapshot = await getDocs(phoneQuery);
-
-      if (!querySnapshot.empty) {
-        Alert.alert("Lỗi", "Số điện thoại đã được sử dụng!");
-        return;
-      }
-
-      // Gửi OTP
       const res = await axios.post("http://192.168.1.11:3000/send-code", {
-        phone: "+84" + phone.slice(1),
+        phone: "+84" + values.phone.slice(1),
       });
 
       if (res.data.success) {
         setOtpSent(true);
-        setFormData({ ten, email, phone, password });
-        Alert.alert("Thông báo", "Đã gửi mã OTP về điện thoại!");
+        setFormData(values);
+        Alert.alert("Thành công", "Mã OTP đã được gửi về điện thoại.");
       } else {
-        Alert.alert("Lỗi", "Gửi OTP thất bại!");
+        Alert.alert("Lỗi", "Gửi OTP thất bại.");
       }
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Lỗi", "Không thể gửi OTP. Vui lòng thử lại!");
+    } catch (error) {
+      console.error("OTP Error:", error);
+      Alert.alert("Lỗi", "Không thể gửi OTP.");
     }
   };
 
   const verifyAndRegister = async () => {
     if (!otpCode || !formData) return;
 
-    const { ten, email, phone, password } = formData;
-
     try {
       setVerifying(true);
 
       const res = await axios.post("http://192.168.1.11:3000/verify-code", {
-        phone: "+84" + phone.slice(1),
+        phone: "+84" + formData.phone.slice(1),
         code: otpCode,
       });
 
       if (res.data.success && res.data.status === "approved") {
-        // Tạo tài khoản Firebase
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-        const uid = userCredential.user.uid;
+        // Gửi dữ liệu đăng ký đến backend
+        const registerRes = await axios.post("http://192.168.1.11:5000/api/auth/register", formData);
 
-        // Lưu dữ liệu vào Firestore
-        await setDoc(doc(firestore, "UserData", uid), {
-          name: ten,
-          email,
-          phone,
-        });
-
-        Alert.alert("Thành công", "Tài khoản đã được tạo!", [
-          {
-            text: "OK",
-            onPress: () => navigation.navigate("LoginScreen"),
-          },
-        ]);
+        if (registerRes.data.success) {
+          Alert.alert("Thành công", "Tạo tài khoản thành công!", [
+            { text: "OK", onPress: () => navigation.navigate("LoginScreen") },
+          ]);
+        } else {
+          Alert.alert("Lỗi", registerRes.data.message || "Đăng ký thất bại.");
+        }
       } else {
         Alert.alert("Lỗi", "Mã OTP không đúng!");
       }
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Lỗi xác thực", "Không thể xác thực mã OTP!");
+    } catch (error) {
+      console.error("Register Error:", error);
+      Alert.alert("Lỗi", "Xác thực OTP hoặc đăng ký thất bại.");
     } finally {
       setVerifying(false);
     }
-  };
-
-  const initialValue = {
-    ten: "",
-    email: "",
-    phone: "",
-    password: "",
   };
 
   return (
@@ -141,9 +101,19 @@ export function Register() {
         <Text style={styles.title}>Đăng ký</Text>
 
         <Formik
-          initialValues={initialValue}
+          initialValues={{
+            name: "",
+            phone: "",
+            email: "",
+            password: "",
+            dob: "",
+            gender: "",
+          }}
+          
           validationSchema={validationSchema}
-          onSubmit={sendOTP}
+          onSubmit={(values) => {
+            sendOTP(values);
+          }}
         >
           {({
             handleChange,
@@ -152,31 +122,17 @@ export function Register() {
             values,
             errors,
             touched,
+            setFieldValue,
           }) => (
-            <View style={{ width: "100%" }}>
+            <View style={styles.formContainer}>
               <TextInput
                 style={styles.input}
-                placeholder="Tên"
-                onChangeText={handleChange("ten")}
-                onBlur={handleBlur("ten")}
-                value={values.ten}
+                placeholder="Họ và tên"
+                onChangeText={handleChange("name")}
+                onBlur={handleBlur("name")}
+                value={values.name}
               />
-              {touched.ten && errors.ten && (
-                <Text style={styles.error}>{errors.ten}</Text>
-              )}
-
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                onChangeText={handleChange("email")}
-                onBlur={handleBlur("email")}
-                value={values.email}
-              />
-              {touched.email && errors.email && (
-                <Text style={styles.error}>{errors.email}</Text>
-              )}
+              {touched.name && errors.name && <Text style={styles.error}>{errors.name}</Text>}
 
               <TextInput
                 style={styles.input}
@@ -186,9 +142,17 @@ export function Register() {
                 onBlur={handleBlur("phone")}
                 value={values.phone}
               />
-              {touched.phone && errors.phone && (
-                <Text style={styles.error}>{errors.phone}</Text>
-              )}
+              {touched.phone && errors.phone && <Text style={styles.error}>{errors.phone}</Text>}
+
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                keyboardType="email-address"
+                onChangeText={handleChange("email")}
+                onBlur={handleBlur("email")}
+                value={values.email}
+              />
+              {touched.email && errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
               <TextInput
                 style={styles.input}
@@ -198,9 +162,37 @@ export function Register() {
                 onBlur={handleBlur("password")}
                 value={values.password}
               />
-              {touched.password && errors.password && (
-                <Text style={styles.error}>{errors.password}</Text>
-              )}
+              {touched.password && errors.password && <Text style={styles.error}>{errors.password}</Text>}
+
+              <TextInput
+                style={styles.input}
+                placeholder="Ngày sinh (yyyy-mm-dd)"
+                onChangeText={handleChange("dob")}
+                onBlur={handleBlur("dob")}
+                value={values.dob}
+              />
+              {touched.dob && errors.dob && <Text style={styles.error}>{errors.dob}</Text>}
+
+              <Text style={{ marginTop: 10 }}>Giới tính:</Text>
+              <View style={{ flexDirection: "row", marginVertical: 10 }}>
+                {["Nam", "Nữ"].map((genderOption) => (
+                  <TouchableOpacity
+                    key={genderOption}
+                    style={{
+                      padding: 10,
+                      borderWidth: 1,
+                      borderColor: values.gender === genderOption ? "#4A00E0" : "#aaa",
+                      borderRadius: 10,
+                      marginRight: 10,
+                      backgroundColor: values.gender === genderOption ? "#e0e0ff" : "#fff",
+                    }}
+                    onPress={() => setFieldValue("gender", genderOption)}
+                  >
+                    <Text>{genderOption}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {touched.gender && errors.gender && <Text style={styles.error}>{errors.gender}</Text>}
 
               <TouchableOpacity style={styles.button} onPress={handleSubmit}>
                 <Text style={styles.buttonText}>Gửi mã OTP</Text>
@@ -241,9 +233,18 @@ export function Register() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1, backgroundColor: "#fff" },
+  formContainer:{
+    width: "100%",
     backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 20,
+    marginVertical: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5, // Cho A
   },
   scrollContainer: {
     alignItems: "center",
@@ -251,11 +252,7 @@ const styles = StyleSheet.create({
     paddingVertical: 50,
     paddingHorizontal: 30,
   },
-  imageContainer: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
-  },
+  imageContainer: { width: 120, height: 120, marginBottom: 20 },
   title: {
     fontSize: 28,
     fontWeight: "700",
@@ -272,7 +269,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontSize: 16,
     backgroundColor: "#f9f9f9",
-    marginTop: 20
+    marginTop: 20,
   },
   button: {
     backgroundColor: "#4A00E0",
