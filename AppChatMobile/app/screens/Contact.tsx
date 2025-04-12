@@ -30,7 +30,7 @@ export default function Contact() {
       const parsedToken = JSON.parse(token);
 
       const response = await axios.get(
-        "http://192.168.1.11:5000/api/friends/requests",
+        "http://192.168.1.11:3000/api/friends/requests",
         {
           headers: {
             Authorization: `Bearer ${parsedToken.token}`,
@@ -51,7 +51,7 @@ export default function Contact() {
       const parsedToken = JSON.parse(token);
 
       const response = await axios.get(
-        "http://192.168.1.11:5000/api/friends/list",
+        "http://192.168.1.11:3000/api/friends/list",
         {
           headers: {
             Authorization: `Bearer ${parsedToken.token}`,
@@ -72,7 +72,7 @@ export default function Contact() {
       const parsedToken = JSON.parse(token);
 
       await axios.post(
-        "http://192.168.1.11:5000/api/friends/accept-request",
+        "http://192.168.1.11:3000/api/friends/accept-request",
         { senderId: requestId },
         {
           headers: {

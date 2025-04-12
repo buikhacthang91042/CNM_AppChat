@@ -85,11 +85,8 @@ export default function LoginScreen() {
   }
 
   return (
-    <ImageBackground
-      source={require("../images/hinhnenLogin.jpg")}
-      style={style.imgbgr}
-    >
-      <View style={{ backgroundColor: "rgba(0,0,0,0.5)", flex: 1 }}>
+    
+      <View style={{ backgroundColor: "#fff", flex: 1 }}>
         <View style={style.container}>
           <View style={style.header}>
             <Image
@@ -112,10 +109,11 @@ export default function LoginScreen() {
               <View style={{ flex: 1 }}>
                 <View style={style.content}>
                   <View style={style.content1}>
-                    <Icon name="mail-outline" size={20}></Icon>
+                    <Icon name="mail-outline" size={20} color={'gray'}></Icon>
                     <TextInput
                       style={style.input}
                       placeholder="Nhập số điện thoại của bạn"
+                      placeholderTextColor={"gray"}
                       keyboardType="phone-pad"
                       onChangeText={props.handleChange("phone")}
                       value={props.values.phone}
@@ -126,6 +124,7 @@ export default function LoginScreen() {
                     <TextInput
                       style={style.input}
                       placeholder="Nhập mật khẩu cùa bạn"
+                      placeholderTextColor={"gray"}
                       ref={password}
                       onChangeText={props.handleChange("password")}
                       value={props.values.password}
@@ -145,7 +144,7 @@ export default function LoginScreen() {
                           navigation.navigate("ForgotPasswordScreen")
                         }
                       >
-                        <Text style={{ color: "red" }}>Quên mật khẩu?</Text>
+                        <Text style={{ color: "red", paddingTop:10, fontWeight:'bold'}}>Quên mật khẩu?</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -197,7 +196,7 @@ export default function LoginScreen() {
           </View>
         </View>
       </View>
-    </ImageBackground>
+  
   );
 }
 const style = StyleSheet.create({
@@ -213,13 +212,11 @@ const style = StyleSheet.create({
     fontSize: 70,
     fontFamily: "Lobster",
     color: "#4A90E2",
-    textShadowColor: "#000",
-    textShadowOffset: { width: 2, height: 3 },
-    textShadowRadius: 10,
+    
   },
   title3: {
     opacity: 0.4,
-    color: "white",
+    color: "black",
   },
   container: {
     flex: 1,
@@ -253,7 +250,7 @@ const style = StyleSheet.create({
     padding: 10,
     marginVertical: 10,
     width: "80%",
-    backgroundColor: "rgba(255,255,255,0.9)",
+    backgroundColor: "#eeeeee",
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -269,7 +266,7 @@ const style = StyleSheet.create({
     padding: 10,
     marginVertical: 10,
     width: "80%",
-    backgroundColor: "rgba(255,255,255,0.9)",
+    backgroundColor: "#eeeeee",
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -286,6 +283,7 @@ const style = StyleSheet.create({
     marginLeft: 10,
     width: "100%",
     height: 40,
+    color: "black",
   },
   button: {
     height: 100,
@@ -297,14 +295,14 @@ const style = StyleSheet.create({
   opacity: {
     borderWidth: 0.5,
     borderRadius: 10,
-    backgroundColor: "#800080",
+    backgroundColor: "blue",
     alignItems: "center",
     width: "80%",
     height: 50,
     justifyContent: "center",
   },
   buttonContinue: {
-    fontSize: 26,
+    fontSize: 20,
     color: "white",
   },
   line: {

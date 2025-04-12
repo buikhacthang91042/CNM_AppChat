@@ -112,11 +112,8 @@ export function Register() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Image
-          source={require("../images/logo.png")}
-          style={styles.imageContainer}
-        />
-        <Text style={styles.title}>Đăng ký</Text>
+      <Text style={styles.title}>Tạo tài khoản</Text>
+      <Text style={{fontSize:14, color:'gray', paddingTop:'-10'}}>Bắt đầu với tài khoản miễn phí của bạn</Text>
 
         <Formik
           initialValues={{
@@ -146,6 +143,7 @@ export function Register() {
               <TextInput
                 style={styles.input}
                 placeholder="Họ và tên"
+                  placeholderTextColor="gray"
                 onChangeText={handleChange("name")}
                 onBlur={handleBlur("name")}
                 value={values.name}
@@ -157,6 +155,7 @@ export function Register() {
               <TextInput
                 style={styles.input}
                 placeholder="Số điện thoại"
+                  placeholderTextColor="gray"
                 keyboardType="phone-pad"
                 onChangeText={handleChange("phone")}
                 onBlur={handleBlur("phone")}
@@ -169,6 +168,7 @@ export function Register() {
               <TextInput
                 style={styles.input}
                 placeholder="Email"
+                  placeholderTextColor="gray"
                 keyboardType="email-address"
                 onChangeText={handleChange("email")}
                 onBlur={handleBlur("email")}
@@ -181,6 +181,7 @@ export function Register() {
               <TextInput
                 style={styles.input}
                 placeholder="Mật khẩu"
+                  placeholderTextColor="gray"
                 secureTextEntry
                 onChangeText={handleChange("password")}
                 onBlur={handleBlur("password")}
@@ -193,6 +194,7 @@ export function Register() {
               <TextInput
                 style={styles.input}
                 placeholder="Ngày sinh (yyyy-mm-dd)"
+                  placeholderTextColor="gray"
                 onChangeText={handleChange("dob")}
                 onBlur={handleBlur("dob")}
                 value={values.dob}
@@ -201,24 +203,26 @@ export function Register() {
                 <Text style={styles.error}>{errors.dob}</Text>
               )}
 
-              <Text style={{ marginTop: 10 }}>Giới tính:</Text>
+              <Text style={{  marginTop: 10, color:'gray' }}>Giới tính:</Text>
               <View style={{ flexDirection: "row", marginVertical: 10 }}>
                 {["Nam", "Nữ"].map((genderOption) => (
                   <TouchableOpacity
                     key={genderOption}
                     style={{
                       padding: 10,
+                      width: '48%',
+                      alignItems: "center",
+                      justifyContent: "center",
+                      
                       borderWidth: 1,
-                      borderColor:
-                        values.gender === genderOption ? "#4A00E0" : "#aaa",
+                      borderColor: values.gender === genderOption ? "blue" : "#aaa",
                       borderRadius: 10,
                       marginRight: 10,
-                      backgroundColor:
-                        values.gender === genderOption ? "#e0e0ff" : "#fff",
+                      backgroundColor: values.gender === genderOption ? "#b8bbbf" : "#eeeeee",
                     }}
                     onPress={() => setFieldValue("gender", genderOption)}
                   >
-                    <Text>{genderOption}</Text>
+                    <Text style={{color:'black', fontWeight:'bold'}}>{genderOption}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -238,6 +242,7 @@ export function Register() {
             <TextInput
               style={styles.input}
               placeholder="Nhập mã OTP"
+               placeholderTextColor="gray"
               keyboardType="number-pad"
               value={otpCode}
               onChangeText={setOtpCode}
@@ -265,10 +270,10 @@ export function Register() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  formContainer: {
+  container: { flex: 1, backgroundColor: "white" },
+  formContainer:{
     width: "100%",
-    backgroundColor: "#fff",
+    backgroundColor: "#eeeeee",
     borderRadius: 20,
     padding: 20,
     marginVertical: 20,
@@ -288,7 +293,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#333",
+    color: "black",
     marginBottom: 25,
   },
   input: {
@@ -300,11 +305,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginBottom: 15,
     fontSize: 16,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "#f8f8f8",
     marginTop: 20,
+    color: "black",
   },
   button: {
-    backgroundColor: "#4A00E0",
+    backgroundColor: "blue",
     paddingVertical: 15,
     borderRadius: 30,
     width: "100%",
@@ -312,7 +318,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   buttonText: {
-    color: "#fff",
+    color: "white",
     fontSize: 17,
     fontWeight: "bold",
   },

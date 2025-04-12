@@ -9,5 +9,5 @@ router.post('/cancel-request', auth, friendController.cancelFriendRequest);
 router.get("/requests", auth, friendController.getFriendRequests);
 router.post("/accept-request", auth, friendController.acceptFriendRequest);
 router.get("/list", auth, friendController.getFriends);
-
+router.get('/sent-requests', auth, friendController.getSentFriendRequests);
 module.exports = router;

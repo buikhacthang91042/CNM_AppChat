@@ -5,7 +5,8 @@ const {
   sendSignupOTP,
   verifyAndSignup,
   updateProfile,
-  checkAuth
+  checkAuth,
+  findByPhone
 } = require('../controllers/auth.controller');
 
 const protectRoute = require('../middleware/auth.middleware');
@@ -29,5 +30,6 @@ router.put('/update-profile', protectRoute, updateProfile);
 
 // 📌 Kiểm tra xác thực người dùng
 router.get('/check', protectRoute, checkAuth);
+router.post("/find-user-by-phone", protectRoute, findByPhone);
 
 module.exports = router;

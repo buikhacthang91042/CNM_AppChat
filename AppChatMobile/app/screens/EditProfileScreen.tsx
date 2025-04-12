@@ -57,7 +57,7 @@ const EditProfileScreen = ({ route, navigation }) => {
       const parsedToken = JSON.parse(token);
   
       const response = await axios.put(
-        "http://192.168.1.11:5000/api/auth/me/update",
+        "http://192.168.1.30:5000/api/auth/me/update",
         updatedData,
         {
           headers: { Authorization: `Bearer ${parsedToken.token}` },
@@ -170,17 +170,21 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#fff',
+    
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginTop: 20,
+    marginBottom: 30,
     textAlign: 'center',
   },
   label: {
     fontSize: 16,
     marginBottom: 5,
     color: '#333',
+    paddingLeft: 30,    
+
   },
   input: {
     borderWidth: 1,
@@ -190,10 +194,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 15,
     backgroundColor: '#f9f9f9',
+    width: '83%',
+    marginLeft: 30,
   },
   genderContainer: {
     flexDirection: 'row',
     marginBottom: 15,
+    width: '80%',
+    marginLeft: 30,
   },
   genderOption: {
     flex: 1,
@@ -204,10 +212,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 5,
     backgroundColor: '#f9f9f9',
+    
   },
   genderOptionSelected: {
     borderColor: '#4A90E2',
     backgroundColor: '#e0f7ff',
+    
   },
   genderText: {
     fontSize: 16,
@@ -223,6 +233,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     marginBottom: 15,
+    width: '83%',
+    marginLeft: 30,
+    shadowColor: '#000',
+    marginTop: 20,
   },
   secondaryButton: {
     backgroundColor: '#FF6347',

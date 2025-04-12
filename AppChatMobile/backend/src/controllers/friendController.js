@@ -8,24 +8,23 @@ exports.sendFriendRequest = async (req, res) => {
   try {
     const request = new FriendRequest({ sender: senderId, receiver: receiverId });
     await request.save();
-
+  
     // Gửi realtime nếu người nhận đang online
     const io = req.app.get('io');
     const onlineUsers = req.app.get('onlineUsers');
     const receiverSocketId = onlineUsers.get(receiverId.toString());
-
+  
     if (receiverSocketId) {
       io.to(receiverSocketId).emit('new_friend_request', {
         request: await request.populate('sender', 'name avatar'),
-        
       });
       console.log("Emit đến", receiverSocketId);
-
     }
-
+  
     res.status(201).json({ message: 'Đã gửi lời mời kết bạn' });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    console.error("Lỗi gửi lời mời:", err); // Ghi log chi tiết
+    res.status(500).json({ message: 'Lỗi server', error: err.message });
   }
 };
 
@@ -103,5 +102,19 @@ exports.getFriends = async (req, res) => {
     res.json(user.friends);
   } catch (err) {
     res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+exports.getSentFriendRequests = async (req, res) => {
+  const userId = req.user._id;
+  try {
+    const requests = await FriendRequest.find({
+      sender: userId,
+      status: "pending",
+    }).populate("receiver", "name avatar phone");
+    res.json({ requests });
+  } catch (error) {
+    console.error("Lỗi lấy lời mời đã gửi:", error);
+    res.status(500).json({ message: "Lỗi server", error: error.message });
   }
 };

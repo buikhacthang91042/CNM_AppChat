@@ -86,7 +86,7 @@ const AccountScreen = () => {
         const token = await AsyncStorage.getItem("token");
         const parsedToken = JSON.parse(token);
         await axios.put(
-          "http://192.168.1.11:5000/api/auth/me/update",
+          "http://192.168.1.11:3000/api/auth/me/update",
           { avatar: imageUrl },
           {
             headers: { Authorization: `Bearer ${parsedToken.token}` },
@@ -113,7 +113,13 @@ const AccountScreen = () => {
       console.error("Logout error:", error.message);
     }
   };
-
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Tháng bắt đầu từ 0
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
@@ -128,13 +134,29 @@ const AccountScreen = () => {
               style={styles.avatar}
             />
           </TouchableOpacity>
-
-          <View style={styles.infoContainer}>
+          <View style={{ alignItems: "center", marginTop: 30 }}>
             <Text style={styles.name}>{userInfo.name}</Text>
-            <Text style={styles.info}> {userInfo.email}</Text>
-            <Text style={styles.info}> {userInfo.phone}</Text>
-            <Text style={styles.info}> {userInfo.gender}</Text>
-            <Text style={styles.info}> {userInfo.dob}</Text>
+          </View>
+          
+          <View style={styles.infoContainer}>
+          <Text style={styles.info}>
+              <Text style={{ color: "black", fontSize: 17, fontWeight: "bold" }}>SĐT: </Text>
+              <Text style={{ color: "black", fontSize: 16 }}>{userInfo.phone}</Text>
+            </Text>
+            <Text style={styles.info}>
+              <Text style={{ color: "black", fontSize: 17, fontWeight: "bold"}}>Email: </Text>
+              <Text style={{ color: "black", fontSize: 16 }}>{userInfo.email}</Text>
+            </Text>
+
+            <Text style={styles.info}>
+              <Text style={{ color: "black", fontSize: 17, fontWeight: "bold" }}>Ngày sinh: </Text>
+              <Text style={{ color: "black", fontSize: 16 }}>{formatDate(userInfo.dob)}</Text>
+            </Text>
+
+            <Text style={styles.info}>
+              <Text style={{ color: "black", fontSize: 17, fontWeight: "bold" }}>Giới tính: </Text>
+              <Text style={{ color: "black", fontSize: 16 }}>{userInfo.gender}</Text>
+            </Text>
           </View>
         </View>
 
@@ -160,17 +182,16 @@ const AccountScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#0D0D0D", // giữ màu nền khi dùng SafeAreaView
+    backgroundColor: "#fff", // giữ màu nền khi dùng SafeAreaView
   },
   container: {
     flex: 1,
-    backgroundColor: "#0D0D0D",
+    backgroundColor: "#fff",
   },
   profileSection: {
-    flexDirection: "row",
     padding: 30,
     alignItems: "center",
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#fff",
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     shadowColor: "#fff",
@@ -179,26 +200,31 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 150,
+    height: 150,
+    borderRadius: 100,
     borderColor: "#FFA500",
     borderWidth: 3,
-    marginRight: 20,
+   
   },
   infoContainer: {
     flex: 1,
+    marginTop: 30,
+    paddingHorizontal: 15,
+    alignItems: "flex-start",
   },
   name: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#fff",
+    color: "black",
     marginBottom: 5,
+    alignItems: "center",
   },
   info: {
     fontSize: 16,
     color: "#ccc",
-    marginBottom: 3,
+    marginBottom: 10,
+    marginLeft: -50,
   },
   buttonSection: {
     padding: 20,
@@ -207,17 +233,19 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1E1E1E",
+    backgroundColor: "#eeeeee",
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 12,
-    shadowColor: "#FFA500",
+    shadowColor: "#gray",
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 4,
+    borderWidth: 1,
+    borderColor: "gray",
   },
   buttonText: {
-    color: "#fff",
+    color: "#black",
     marginLeft: 15,
     fontSize: 16,
     fontWeight: "600",
