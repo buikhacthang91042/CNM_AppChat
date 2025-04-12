@@ -114,7 +114,7 @@ const login = async (req, res) => {
       formattedPhone = `+84${phone.replace(/^0/, "")}`;
     }
 
-    const user = await User.findOne({ phone: formattedPhone });
+    const user = await User.findOne({ phone: formattedPhone }).select('+password');
     if (!user) return res.status(401).json({ message: "Số điện thoại không tồn tại" });
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -295,6 +295,43 @@ const resetPassword = async (req, res) => {
     res.status(401).json({ message: "Token không hợp lệ hoặc đã hết hạn" });
   }
 };
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: 'Thiếu thông tin mật khẩu' });
+    }
+
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user || !user.password) {
+      return res.status(400).json({ message: 'Không tìm thấy mật khẩu người dùng' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Mật khẩu hiện tại không đúng' });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: 'Mật khẩu mới và xác nhận mật khẩu không khớp' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({ message: 'Mật khẩu đã được thay đổi thành công' });
+  } catch (error) {
+    console.error("Lỗi trong changePassword:", error);
+    res.status(500).json({ message: 'Lỗi máy chủ' });
+  }
+};
 
 module.exports = {
   sendSignupOTP,
@@ -306,4 +343,5 @@ module.exports = {
   sendForgotPasswordOTP,
   verifyForgotPasswordOTP,
   resetPassword,
+  changePassword
 };

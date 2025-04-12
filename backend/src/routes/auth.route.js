@@ -8,7 +8,8 @@ const {
   checkAuth,
   sendForgotPasswordOTP,
   verifyForgotPasswordOTP,
-  resetPassword
+  resetPassword,
+  changePassword
 } = require('../controllers/auth.controller');
 
 const protectRoute = require('../middleware/auth.middleware');
@@ -32,6 +33,10 @@ router.put('/update-profile', protectRoute, updateProfile);
 
 // 📌 Kiểm tra xác thực người dùng
 router.get('/check', protectRoute, checkAuth);
+
+
+// Route để thay đổi mật khẩu
+router.put('/change-password', protectRoute, changePassword);
 
 // otp quen mat khau
 router.post('/send-forgot-otp', sendForgotPasswordOTP);
