@@ -184,6 +184,25 @@ const useAuthStore = create((set) => ({
       toast.error(error.response?.data?.message || "Lỗi khi đổi mật khẩu");
     }
   },
+  //doi mat khau trong profile
+  changePassword: async ({ currentPassword, newPassword, confirmPassword }) => {
+    try {
+      const response = await axiosInstance.put('/auth/change-password', {
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
+
+      if (response.status === 200) {
+        return { success: true, message: response.data.message || "Mật khẩu đã được thay đổi thành công!" };
+      } else {
+        return { success: false, message: response.data.message || "Đổi mật khẩu thất bại" };
+      }
+    } catch (error) {
+      console.error("Change password failed:", error);
+      return { success: false, message: error.response?.data?.message || "Lỗi hệ thống" };
+    }
+  },
 }));
 
 export default useAuthStore;

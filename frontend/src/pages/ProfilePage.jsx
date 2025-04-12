@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Camera, Mail, Phone, User, Calendar, Heart } from "lucide-react";
 import useAuthStore from "../store/useAuthStore";
 import { toast } from "react-hot-toast";
-
+import ChangePasswordSection from "../components/ChangePasswordSection";
 const ProfilePage = () => {
   const { authUser, isUpdatingProfile, updateProfile } = useAuthStore();
   const [selectedImg, setSelectedImg] = useState(null);
@@ -252,6 +252,8 @@ const ProfilePage = () => {
             >
               {isUpdatingProfile ? "Updating..." : "Update Profile"}
             </button>
+
+            <ChangePasswordSection />
           </div>
 
           {/* Account Info */}
