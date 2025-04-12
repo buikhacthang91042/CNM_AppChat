@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const cloudinary = require('../config/cloudinary');
 const generateToken = require('../config/utils');
 const { client, serviceSid } = require('../config/twilio');
-
+const jwt = require('jsonwebtoken');
 // 📌 1. Gửi OTP tới số điện thoại đăng ký
 const sendSignupOTP = async (req, res) => {
   const { phone } = req.body;
@@ -198,6 +198,75 @@ const checkAuth = async (req, res) => {
     createAt: user.createAt,
   });
 };
+// Xac thu OTP cho quen MK
+// 📌 Xác thực OTP cho quên mật khẩu
+
+const verifyForgotPasswordOTP = async (req, res) => {
+  const { phone, code } = req.body;
+
+  if (!phone || !code) {
+    return res.status(400).json({ message: "Thiếu số điện thoại hoặc mã OTP" });
+  }
+
+  try {
+    let formattedPhone = phone;
+    if (!phone.startsWith("+")) {
+      formattedPhone = `+84${phone.replace(/^0/, "")}`;
+    }
+
+    const check = await client.verify.v2.services(serviceSid)
+      .verificationChecks.create({ to: formattedPhone, code });
+
+    if (check.status !== 'approved') {
+      return res.status(400).json({ message: "Mã OTP không hợp lệ hoặc đã hết hạn" });
+    }
+
+    // Tạo resetToken (JWT có hạn 5 phút)
+    const resetToken = jwt.sign(
+      { phone: formattedPhone },
+      process.env.JWT_SECRET,
+      { expiresIn: '5m' }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Xác minh thành công",
+      resetToken,
+    });
+  } catch (err) {
+    console.error("Lỗi xác minh OTP:", err.message);
+    res.status(500).json({ message: "Lỗi máy chủ khi xác minh OTP" });
+  }
+};
+
+// đổi mật khâu
+// 📌 Đặt lại mật khẩu
+const resetPassword = async (req, res) => {
+  const { resetToken, newPassword } = req.body;
+
+  if (!resetToken || !newPassword) {
+    return res.status(400).json({ message: "Thiếu token hoặc mật khẩu mới" });
+  }
+
+  try {
+    const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+    const phone = decoded.phone;
+
+    const user = await User.findOne({ phone });
+    if (!user) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Đặt lại mật khẩu thành công" });
+  } catch (err) {
+    console.error("Lỗi đặt lại mật khẩu:", err.message);
+    res.status(401).json({ message: "Token không hợp lệ hoặc đã hết hạn" });
+  }
+};
 
 module.exports = {
   sendSignupOTP,
@@ -206,4 +275,6 @@ module.exports = {
   logout,
   updateProfile,
   checkAuth,
+  verifyForgotPasswordOTP,
+  resetPassword,
 };

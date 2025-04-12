@@ -5,7 +5,9 @@ const {
   sendSignupOTP,
   verifyAndSignup,
   updateProfile,
-  checkAuth
+  checkAuth,
+  verifyForgotPasswordOTP,
+  resetPassword
 } = require('../controllers/auth.controller');
 
 const protectRoute = require('../middleware/auth.middleware');
@@ -29,5 +31,10 @@ router.put('/update-profile', protectRoute, updateProfile);
 
 // 📌 Kiểm tra xác thực người dùng
 router.get('/check', protectRoute, checkAuth);
+
+// Xac thực quên mật khẩu 
+router.post('/verify-otp', verifyForgotPasswordOTP);
+// Đổi mật khẩu
+router.post('/reset-password', resetPassword);
 
 module.exports = router;
