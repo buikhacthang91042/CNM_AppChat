@@ -10,6 +10,7 @@ const useAuthStore = create((set) => ({
   isCheckingAuth: true,
   isSendingOTP: false,
   tempSignupData: null,
+  tempResetToken: null,
 
   checkAuth: async () => {
     set({ isCheckingAuth: true });
@@ -124,6 +125,63 @@ const useAuthStore = create((set) => ({
       toast.error(errorMessage);
     } finally {
       set({ isUpdatingProfile: false });
+    }
+  },
+
+  // 📌 Gửi OTP cho forgot password
+  sendForgotOTP: async (phone) => {
+    set({ isSendingOTP: true });
+    try {
+      const res = await axiosInstance.post("/auth/send-forgot-otp", { phone }); // Không format lại
+      toast.success(res.data.message || "Đã gửi OTP quên mật khẩu");
+    } catch (error) {
+      console.error("Lỗi gửi OTP: ", error);
+      toast.error(error.response?.data?.message || "Không thể gửi OTP");
+    } finally {
+      set({ isSendingOTP: false });
+    }
+  },
+  
+  
+  
+
+  // 📌 Xác minh OTP để nhận reset token
+  verifyForgotOTP: async (phone, code) => {
+    try {
+      const res = await axiosInstance.post("/auth/verify-otp", { phone, code });
+      set({ tempResetToken: res.data.resetToken  }); // lưu resetToken tạm
+      toast.success("OTP hợp lệ. Nhập mật khẩu mới.");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Xác minh OTP thất bại");
+    }
+  },
+
+  // 📌 Đổi mật khẩu mới
+  resetPassword: async (newPassword, confirmPassword, navigate) => {
+    try {
+      if (newPassword !== confirmPassword) {
+        toast.error("Mật khẩu xác nhận không khớp");
+        return;
+      }
+
+      const { tempResetToken } = useAuthStore.getState(); // lấy resetToken
+      console.log("Sending reset with token:", tempResetToken);
+
+      if (!tempResetToken) {
+        toast.error("Thiếu token reset");
+        return;
+      }
+
+      await axiosInstance.post("/auth/reset-password", {
+        resetToken: tempResetToken,
+        newPassword,
+      });
+
+      toast.success("Đổi mật khẩu thành công. Hãy đăng nhập lại.");
+      set({ tempResetToken: null });
+      navigate("/login");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Lỗi khi đổi mật khẩu");
     }
   },
 }));

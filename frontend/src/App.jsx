@@ -10,7 +10,7 @@ import useAuthStore from "./store/useAuthStore";
 import { useEffect } from "react";
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
-
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 const App = () => {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
 
@@ -43,6 +43,8 @@ const App = () => {
         <Route path="/settings" element={authUser ? <SettingsPage /> : <Navigate to="/login" />} />
         {/* Trang hồ sơ - yêu cầu đăng nhập */}
         <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
+
+        <Route path="/forgot-password" element={!authUser ? <ForgotPasswordPage /> : <Navigate to="/" />} />
       </Routes>
       <Toaster />
     </div>

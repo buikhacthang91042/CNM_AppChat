@@ -6,6 +6,7 @@ const {
   verifyAndSignup,
   updateProfile,
   checkAuth,
+  sendForgotPasswordOTP,
   verifyForgotPasswordOTP,
   resetPassword
 } = require('../controllers/auth.controller');
@@ -32,6 +33,8 @@ router.put('/update-profile', protectRoute, updateProfile);
 // 📌 Kiểm tra xác thực người dùng
 router.get('/check', protectRoute, checkAuth);
 
+// otp quen mat khau
+router.post('/send-forgot-otp', sendForgotPasswordOTP);
 // Xac thực quên mật khẩu 
 router.post('/verify-otp', verifyForgotPasswordOTP);
 // Đổi mật khẩu

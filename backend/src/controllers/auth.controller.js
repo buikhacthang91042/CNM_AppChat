@@ -198,6 +198,34 @@ const checkAuth = async (req, res) => {
     createAt: user.createAt,
   });
 };
+//send otp quen mk 
+const sendForgotPasswordOTP = async (req, res) => {
+  let { phone } = req.body;
+
+  if (!phone) {
+    return res.status(400).json({ message: "Thiếu số điện thoại!" });
+  }
+
+  if (!phone.startsWith("+")) {
+    phone = `+84${phone.replace(/^0/, "")}`;
+  }
+
+  try {
+    const user = await User.findOne({ phone });
+    if (!user) {
+      return res.status(404).json({ message: "Số điện thoại chưa được đăng ký" });
+    }
+
+    await client.verify.v2.services(serviceSid)
+      .verifications.create({ to: phone, channel: 'sms' });
+
+    res.status(200).json({ success: true, message: "Đã gửi mã OTP để đặt lại mật khẩu." });
+  } catch (err) {
+    console.error("Lỗi gửi OTP quên mật khẩu:", err.message);
+    res.status(500).json({ success: false, message: "Không thể gửi OTP." });
+  }
+};
+
 // Xac thu OTP cho quen MK
 // 📌 Xác thực OTP cho quên mật khẩu
 
@@ -275,6 +303,7 @@ module.exports = {
   logout,
   updateProfile,
   checkAuth,
+  sendForgotPasswordOTP,
   verifyForgotPasswordOTP,
   resetPassword,
 };
