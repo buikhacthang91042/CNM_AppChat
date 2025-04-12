@@ -17,25 +17,13 @@ import UpdatePassword from './app/screens/UpdatePassword';
 import AddFriend from './app/screens/AddFriendScreen';
 import UserProfile from './app/screens/UserProfileScreen';
 import Icon from "react-native-vector-icons/Ionicons";
-import socket from './app/config/socket'; 
+
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 export default function Navigation() {
-  useEffect(() => {
-    
-    socket.on('new_friend_request', (data) => {
-      console.log("Lời mời kết bạn mới:", data);
-      Alert.alert("Bạn có lời mời kết bạn mới", `${data.request.sender.name}`);
-    });
-
-   
-    return () => {
-      socket.off('new_friend_request');
-    };
-  }, []);
-
+ 
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>

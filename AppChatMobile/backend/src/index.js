@@ -1,16 +1,41 @@
 const express = require('express');
+const authRoutes = require('./routes/auth.route');
+const messageRoutes = require('./routes/message.route');
+const friendRoutes = require('./routes/friends');
+// ❌ Xoá vì không cần nữa:
+// const otpRoutes = require("./routes/otp.route");
 const http = require('http');
 const socketio = require('socket.io');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
-const connectDB = require('./config/db');
-const authRoutes = require('./routes/auth');
-const friendRoutes = require('./routes/friends');
-dotenv.config()
+const { connectDB } = require('./config/database');
+
+const PORT = 3000;
 const app = express();
-app.use(cors());
-app.use(express.json());
+
+dotenv.config();
+
+
+// 🍪 Parse cookie từ request
+app.use(cookieParser());
+
+// 🌐 Cho phép gọi API từ client frontend
+app.use(cors({
+    origin: "*", // Cho phép tất cả nguồn gốc trong phát triển
+    credentials: true
+  }));
+
+// 📦 Xử lý dữ liệu JSON và ảnh base64 có kích thước lớn
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// 🚀 Đăng ký các route
 app.use('/api/auth', authRoutes);
+app.use('/api/message', messageRoutes);
+// ❌ Không cần route OTP nữa
+// app.use('/api/otp', otpRoutes);
+
 app.use('/api/friends', friendRoutes);
 
 
@@ -22,13 +47,9 @@ const io = socketio(server, {
         method: ['GET', 'POST'],
     }
 });
+console.log("Socket.IO initialized");
 
-connectDB();
-
-app.get('/', (req,res) => {
-    res.send("API đang chạy");
-});
-
+// Socket
 const onlineUsers = new Map();
 io.on('connection', (socket) => {
     console.log("Có người đăng nhập mới: " + socket.id);
@@ -53,8 +74,10 @@ io.on('connection', (socket) => {
 app.set('io', io); 
 app.set('onlineUsers', onlineUsers);
 
-const PORT = process.env.PORT || 5000;
+
+
+
 server.listen(PORT, '0.0.0.0',() => {
-    console.log(`Server running on port ${PORT}`);
-    
-})
+    console.log(`Server running on port: ${PORT}`);
+    connectDB();
+});

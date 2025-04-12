@@ -14,18 +14,19 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
-
+import { useRegister } from "../context/RegisterContext";
 export function Register() {
   const navigation = useNavigation();
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [formData, setFormData] = useState(null);
   const [verifying, setVerifying] = useState(false);
+  const { registerInfo, setRegisterInfo } = useRegister();
 
   const validationSchema = Yup.object().shape({
     name: Yup.string()
       .required("Vui lòng nhập tên")
-      .min(3, "Tên phải nhiều hơn 3 kí tự"),
+      .min(6, "Tên phải nhiều hơn 6 kí tự"),
     email: Yup.string()
       .email("Email không hợp lệ")
       .required("Vui lòng nhập email"),
@@ -35,25 +36,43 @@ export function Register() {
     password: Yup.string()
       .required("Vui lòng nhập mật khẩu")
       .min(6, "Mật khẩu phải ít nhất 6 ký tự"),
-    dob: Yup.string().required("Vui lòng nhập ngày sinh"),
+      dob: Yup.string()
+      .required("Vui lòng nhập ngày sinh")
+      .matches(
+        /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/,
+        "Ngày sinh phải có định dạng yyyy-mm-dd và là ngày hợp lệ"
+      )
+      .test("is-valid-date", "Ngày sinh không hợp lệ", (value) => {
+        if (!value) return false;
+        const date = new Date(value);
+        return date instanceof Date && !isNaN(date);
+      }),
     gender: Yup.string().required("Vui lòng chọn giới tính"),
   });
 
   const sendOTP = async (values) => {
     try {
-      const res = await axios.post("http://192.168.1.11:3000/send-code", {
-        phone: "+84" + values.phone.slice(1),
-      });
+      let formattedPhone = values.phone;
+      if (!formattedPhone.startsWith("+")) {
+        formattedPhone = `+84${values.phone.replace(/^0/, "")}`;
+      }
+
+      const res = await axios.post(
+        "http://192.168.1.11:3000/api/auth/send-otp",
+        {
+          phone: formattedPhone,
+        }
+      );
 
       if (res.data.success) {
         setOtpSent(true);
-        setFormData(values);
+        setFormData({ ...values, phone: formattedPhone });
         Alert.alert("Thành công", "Mã OTP đã được gửi về điện thoại.");
       } else {
         Alert.alert("Lỗi", "Gửi OTP thất bại.");
       }
     } catch (error) {
-      console.error("OTP Error:", error);
+      console.error("OTP Error:", error.message);
       Alert.alert("Lỗi", "Không thể gửi OTP.");
     }
   };
@@ -64,24 +83,23 @@ export function Register() {
     try {
       setVerifying(true);
 
-      const res = await axios.post("http://192.168.1.11:3000/verify-code", {
-        phone: "+84" + formData.phone.slice(1),
+      const res = await axios.post("http://192.168.1.11:3000/api/auth/verify-signup", {
+        phone:formData.phone,
         code: otpCode,
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        dob: formData.dob,
+        gender: formData.gender,
+        avatar: "",
       });
 
-      if (res.data.success && res.data.status === "approved") {
-        // Gửi dữ liệu đăng ký đến backend
-        const registerRes = await axios.post("http://192.168.1.11:5000/api/auth/register", formData);
-
-        if (registerRes.data.success) {
-          Alert.alert("Thành công", "Tạo tài khoản thành công!", [
-            { text: "OK", onPress: () => navigation.navigate("LoginScreen") },
-          ]);
-        } else {
-          Alert.alert("Lỗi", registerRes.data.message || "Đăng ký thất bại.");
-        }
+      if (res.data.token) {
+        Alert.alert("Thành công", "Tạo tài khoản thành công!", [
+          { text: "OK", onPress: () => navigation.navigate("LoginScreen") },
+        ]);
       } else {
-        Alert.alert("Lỗi", "Mã OTP không đúng!");
+        Alert.alert("Lỗi", res.data.message || "Đăng ký thất bại.");
       }
     } catch (error) {
       console.error("Register Error:", error);
@@ -109,9 +127,9 @@ export function Register() {
             dob: "",
             gender: "",
           }}
-          
           validationSchema={validationSchema}
           onSubmit={(values) => {
+            setRegisterInfo(values); // Lưu vào context
             sendOTP(values);
           }}
         >
@@ -132,7 +150,9 @@ export function Register() {
                 onBlur={handleBlur("name")}
                 value={values.name}
               />
-              {touched.name && errors.name && <Text style={styles.error}>{errors.name}</Text>}
+              {touched.name && errors.name && (
+                <Text style={styles.error}>{errors.name}</Text>
+              )}
 
               <TextInput
                 style={styles.input}
@@ -142,7 +162,9 @@ export function Register() {
                 onBlur={handleBlur("phone")}
                 value={values.phone}
               />
-              {touched.phone && errors.phone && <Text style={styles.error}>{errors.phone}</Text>}
+              {touched.phone && errors.phone && (
+                <Text style={styles.error}>{errors.phone}</Text>
+              )}
 
               <TextInput
                 style={styles.input}
@@ -152,7 +174,9 @@ export function Register() {
                 onBlur={handleBlur("email")}
                 value={values.email}
               />
-              {touched.email && errors.email && <Text style={styles.error}>{errors.email}</Text>}
+              {touched.email && errors.email && (
+                <Text style={styles.error}>{errors.email}</Text>
+              )}
 
               <TextInput
                 style={styles.input}
@@ -162,7 +186,9 @@ export function Register() {
                 onBlur={handleBlur("password")}
                 value={values.password}
               />
-              {touched.password && errors.password && <Text style={styles.error}>{errors.password}</Text>}
+              {touched.password && errors.password && (
+                <Text style={styles.error}>{errors.password}</Text>
+              )}
 
               <TextInput
                 style={styles.input}
@@ -171,7 +197,9 @@ export function Register() {
                 onBlur={handleBlur("dob")}
                 value={values.dob}
               />
-              {touched.dob && errors.dob && <Text style={styles.error}>{errors.dob}</Text>}
+              {touched.dob && errors.dob && (
+                <Text style={styles.error}>{errors.dob}</Text>
+              )}
 
               <Text style={{ marginTop: 10 }}>Giới tính:</Text>
               <View style={{ flexDirection: "row", marginVertical: 10 }}>
@@ -181,10 +209,12 @@ export function Register() {
                     style={{
                       padding: 10,
                       borderWidth: 1,
-                      borderColor: values.gender === genderOption ? "#4A00E0" : "#aaa",
+                      borderColor:
+                        values.gender === genderOption ? "#4A00E0" : "#aaa",
                       borderRadius: 10,
                       marginRight: 10,
-                      backgroundColor: values.gender === genderOption ? "#e0e0ff" : "#fff",
+                      backgroundColor:
+                        values.gender === genderOption ? "#e0e0ff" : "#fff",
                     }}
                     onPress={() => setFieldValue("gender", genderOption)}
                   >
@@ -192,7 +222,9 @@ export function Register() {
                   </TouchableOpacity>
                 ))}
               </View>
-              {touched.gender && errors.gender && <Text style={styles.error}>{errors.gender}</Text>}
+              {touched.gender && errors.gender && (
+                <Text style={styles.error}>{errors.gender}</Text>
+              )}
 
               <TouchableOpacity style={styles.button} onPress={handleSubmit}>
                 <Text style={styles.buttonText}>Gửi mã OTP</Text>
@@ -234,7 +266,7 @@ export function Register() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
-  formContainer:{
+  formContainer: {
     width: "100%",
     backgroundColor: "#fff",
     borderRadius: 20,

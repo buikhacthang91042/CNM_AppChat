@@ -58,18 +58,18 @@ export default function LoginScreen() {
 
     try {
       const response = await axios.post(
-        "http://192.168.1.11:5000/api/auth/login",
+        "http://192.168.1.11:3000/api/auth/login",
         {
           phone,
           password,
         }
       );
-      const token = response.data;
+      const tokenData = response.data;
      
-      await AsyncStorage.setItem("token",JSON.stringify(token));
-      const userId = token.user.id;
+      await AsyncStorage.setItem("token",JSON.stringify(tokenData));
+      const userId = tokenData.user._id;
       setUserId(userId);
-      
+      socket.emit("register", userId);
       
        console.log("Đã gửi register socket:", userId);
       console.log("Đăng nhập thành công:", response.data);

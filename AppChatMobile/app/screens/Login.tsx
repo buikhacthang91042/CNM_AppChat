@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image,TouchableOpacity, SafeAreaView } from 'react-native';
+import { StyleSheet, Text, View, Image,TouchableOpacity, SafeAreaView ,Button} from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import {useNavigation}  from '@react-navigation/native';
 import React, { useEffect } from 'react';
@@ -142,6 +142,7 @@ export function Login() {
           </Text>
         </Text>
       </View>
+     
     </SafeAreaView>
   );
 }

@@ -38,7 +38,7 @@ const AccountScreen = () => {
           if (!parsedToken) return;
   
           const response = await axios.get(
-            "http://192.168.1.11:5000/api/auth/me",
+            "http://192.168.1.11:3000/api/auth/check",
             {
               headers: {
                 Authorization: `Bearer ${parsedToken.token}`,
