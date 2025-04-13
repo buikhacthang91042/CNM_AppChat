@@ -27,6 +27,7 @@ export default function Contact() {
   const fetchFriendRequests = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
+      if (!token) throw new Error("Không tìm thấy token");
       const parsedToken = JSON.parse(token);
 
       const response = await axios.get(
@@ -48,6 +49,7 @@ export default function Contact() {
   const fetchFriends = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
+      if (!token) throw new Error("Không tìm thấy token");
       const parsedToken = JSON.parse(token);
 
       const response = await axios.get(
@@ -66,14 +68,15 @@ export default function Contact() {
     }
   };
 
-  const acceptRequest = async (requestId) => {
+  const acceptRequest = async (senderId) => {
     try {
       const token = await AsyncStorage.getItem("token");
+      if (!token) throw new Error("Không tìm thấy token");
       const parsedToken = JSON.parse(token);
 
       await axios.post(
         "http://192.168.1.11:3000/api/friends/accept-request",
-        { senderId: requestId },
+        { senderId },
         {
           headers: {
             Authorization: `Bearer ${parsedToken.token}`,
@@ -82,34 +85,64 @@ export default function Contact() {
       );
 
       Alert.alert("Thành công", "Đã chấp nhận lời mời.");
-      fetchFriendRequests();
+      fetchFriendRequests(); // Cập nhật danh sách lời mời
     } catch (error) {
-      console.error("Lỗi chấp nhận:", error);
-      Alert.alert("Lỗi", "Không thể chấp nhận lời mời.");
+      console.error("Lỗi chấp nhận:", error.response?.data);
+      Alert.alert(
+        "Lỗi",
+        error.response?.data?.message || "Không thể chấp nhận lời mời."
+      );
     }
   };
 
-  const rejectRequest = async (requestId) => {
-    Alert.alert("OK");
-    // Implement reject logic if needed
+  const rejectRequest = async (senderId) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) throw new Error("Không tìm thấy token");
+      const parsedToken = JSON.parse(token);
+
+      await axios.post(
+        "http://192.168.1.11:3000/api/friends/reject-request",
+        { senderId },
+        {
+          headers: {
+            Authorization: `Bearer ${parsedToken.token}`,
+          },
+        }
+      );
+
+      Alert.alert("Thành công", "Đã từ chối lời mời.");
+      fetchFriendRequests(); // Cập nhật danh sách lời mời
+    } catch (error) {
+      console.error("Lỗi từ chối:", error.response?.data);
+      Alert.alert(
+        "Lỗi",
+        error.response?.data?.message || "Không thể từ chối lời mời."
+      );
+    }
   };
 
   const renderRequestItem = ({ item }) => (
     <View style={styles.requestItem}>
       <View style={styles.row}>
-        <Image source={{ uri: item.sender.avatar }} style={styles.avatar} />
+        <Image
+          source={{
+            uri: item.userId1.avatar || "https://via.placeholder.com/50",
+          }}
+          style={styles.avatar}
+        />
         <View style={styles.infoContainer}>
-          <Text style={styles.senderName}>{item.sender.name}</Text>
+          <Text style={styles.senderName}>{item.userId1.name}</Text>
           <View style={styles.buttons}>
             <TouchableOpacity
               style={[styles.button, { backgroundColor: "#28A745" }]}
-              onPress={() => acceptRequest(item.sender._id)}
+              onPress={() => acceptRequest(item.userId1._id)}
             >
               <Text style={styles.buttonText}>Chấp nhận</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, { backgroundColor: "#DC3545" }]}
-              onPress={() => rejectRequest(item.sender._id)}
+              onPress={() => rejectRequest(item.userId1._id)}
             >
               <Text style={styles.buttonText}>Từ chối</Text>
             </TouchableOpacity>
@@ -122,7 +155,10 @@ export default function Contact() {
   const renderFriendItem = ({ item }) => (
     <View style={styles.requestItem}>
       <View style={styles.row}>
-        <Image source={{ uri: item.avatar }} style={styles.avatar} />
+        <Image
+          source={{ uri: item.avatar || "https://via.placeholder.com/50" }}
+          style={styles.avatar}
+        />
         <View style={styles.infoContainer}>
           <Text style={styles.senderName}>{item.name}</Text>
         </View>
@@ -195,12 +231,6 @@ const styles = StyleSheet.create({
   tabText: {
     color: "#fff",
     fontWeight: "bold",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 20,
-    textAlign: "center",
   },
   requestItem: {
     padding: 12,

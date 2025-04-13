@@ -34,7 +34,7 @@ const userShema = new mongoose.Schema({
       type: Date,
       default: Date.now
     },
-     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "user" }],
+     
   });
 const User = mongoose.model('user',userShema);
 
