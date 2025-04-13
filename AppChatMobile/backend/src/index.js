@@ -33,6 +33,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // 🚀 Đăng ký các route
 app.use('/api/auth', authRoutes);
 app.use('/api/message', messageRoutes);
+app.use("/api/chat", require("./routes/chat.route"));
 // ❌ Không cần route OTP nữa
 // app.use('/api/otp', otpRoutes);
 
