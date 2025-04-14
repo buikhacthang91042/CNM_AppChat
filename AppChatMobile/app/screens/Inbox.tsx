@@ -8,6 +8,9 @@ import {
   SafeAreaView,
 } from "react-native";
 import React, { useRef, useState, useEffect } from "react";
+
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import ActionSheet from "react-native-actions-sheet";
 import { useNavigation } from "@react-navigation/native";
@@ -21,17 +24,18 @@ export default function Home() {
   const actionSheetRef = useRef(null);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    fetchChats();
-
-    socket.on("new_message", () => {
+  useFocusEffect(
+    useCallback(() => {
       fetchChats();
-    });
-
-    return () => {
-      socket.off("new_message");
-    };
-  }, []);
+  
+      socket.on("new_message", fetchChats);
+  
+      return () => {
+        socket.off("new_message", fetchChats);
+      };
+    }, [])
+  );
+  
 
   const fetchChats = async () => {
     try {
@@ -39,11 +43,14 @@ export default function Home() {
       if (!token) throw new Error("Không tìm thấy token");
       const parsedToken = JSON.parse(token);
 
-      const response = await axios.get("http://192.168.1.11:3000/api/chat/list", {
-        headers: {
-          Authorization: `Bearer ${parsedToken.token}`,
-        },
-      });
+      const response = await axios.get(
+        "http://192.168.1.11:3000/api/chat/list",
+        {
+          headers: {
+            Authorization: `Bearer ${parsedToken.token}`,
+          },
+        }
+      );
 
       console.log("Chats fetched:", response.data.chats); // Debug
       setChats(response.data.chats);
@@ -93,7 +100,9 @@ export default function Home() {
           <Text style={{ fontSize: 16, fontWeight: "600", color: "#222" }}>
             {item.name}
           </Text>
-          <Text style={{ color: "#666", marginTop: 2 }}>{item.lastMessage}</Text>
+          <Text style={{ color: "#666", marginTop: 2 }}>
+            {item.lastMessage}
+          </Text>
         </View>
       </TouchableOpacity>
     );

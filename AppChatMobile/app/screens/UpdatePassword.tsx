@@ -16,6 +16,13 @@ const UpdatePassword = ({ navigation }) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  console.log('Dữ liệu gửi lên API:', {
+    currentPassword,
+    newPassword,
+    confirmPassword,
+  });
+  
+
   const handleUpdatePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin.');
@@ -27,33 +34,38 @@ const UpdatePassword = ({ navigation }) => {
       return;
     }
 
+    if (newPassword.length < 6) {
+      Alert.alert('Lỗi', 'Mật khẩu mới phải có ít nhất 6 ký tự.');
+      return;
+    }
+
     try {
       const token = await AsyncStorage.getItem('token');
-      const parsedToken = JSON.parse(token);
-
-      // Kiểm tra mật khẩu hiện tại
-      const verifyResponse = await axios.post(
-        'http://192.168.1.30:5000/api/auth/verify-password',
-        { currentPassword },
-        {
-          headers: { Authorization: `Bearer ${parsedToken.token}` },
-        }
-      );
-
-      if (verifyResponse.status !== 200) {
-        Alert.alert('Lỗi', 'Mật khẩu hiện tại không đúng.');
+      if (!token) {
+        Alert.alert('Lỗi', 'Bạn chưa đăng nhập.');
         return;
       }
 
-      // Nếu mật khẩu hiện tại đúng, tiếp tục đổi mật khẩu
-      
-const response = await axios.put(
-    'http://192.168.1.30:5000/api/auth/me/update-password',
-    { currentPassword, newPassword },
-    {
-      headers: { Authorization: `Bearer ${parsedToken.token}` },
-    }
-  );
+      const parsedToken = JSON.parse(token);
+      if (!parsedToken || !parsedToken.token) {
+        Alert.alert('Lỗi', 'Token không hợp lệ.');
+        return;
+      }
+
+      const response = await axios.post(
+        'http://192.168.1.11:3000/api/auth/update-password',
+        {
+          currentPassword,
+          newPassword,
+          confirmPassword,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${parsedToken.token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       if (response.status === 200) {
         Alert.alert('Thành công', 'Cập nhật mật khẩu thành công!', [
@@ -64,9 +76,12 @@ const response = await axios.put(
         ]);
       }
     } catch (error) {
-      console.error('Lỗi cập nhật mật khẩu:', error.message);
-      if (error.response && error.response.data && error.response.data.message) {
+      console.error('Lỗi cập nhật mật khẩu:', error);
+
+      if (error.response?.data?.message) {
         Alert.alert('Lỗi', error.response.data.message);
+      } else if (error.request) {
+        Alert.alert('Lỗi', 'Không nhận được phản hồi từ server.');
       } else {
         Alert.alert('Lỗi', 'Không thể cập nhật mật khẩu. Vui lòng thử lại.');
       }
@@ -122,11 +137,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
+    paddingTop: 30,
   },
   label: {
     fontSize: 16,
     marginBottom: 5,
     color: '#333',
+    paddingLeft: 35,
   },
   input: {
     borderWidth: 1,
@@ -136,6 +153,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 15,
     backgroundColor: '#f9f9f9',
+    width: '80%',
+    marginLeft: '35',
   },
   button: {
     backgroundColor: '#4A90E2',
@@ -143,6 +162,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 10,
+    width: '80%',
+    marginLeft: '35',
   },
   buttonText: {
     color: '#fff',

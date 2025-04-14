@@ -9,7 +9,8 @@ const {
   sendForgotPasswordOTP,
   verifyForgotPasswordOTP,
   resetPassword,
-  changePassword
+  changePassword,
+  updateUserImg
 } = require('../controllers/auth.controller');
 
 const protectRoute = require('../middleware/auth.middleware');
@@ -37,7 +38,7 @@ router.get('/check', protectRoute, checkAuth);
 
 // Route để thay đổi mật khẩu
 router.put('/change-password', protectRoute, changePassword);
-
+router.put("/me/update", protectRoute, updateUserImg);
 // otp quen mat khau
 router.post('/send-forgot-otp', sendForgotPasswordOTP);
 // Xac thực quên mật khẩu 

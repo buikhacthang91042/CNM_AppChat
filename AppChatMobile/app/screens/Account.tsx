@@ -86,7 +86,7 @@ const AccountScreen = () => {
         const token = await AsyncStorage.getItem("token");
         const parsedToken = JSON.parse(token);
         await axios.put(
-          "http://192.168.1.11:3000/api/auth/me/update",
+          "http://192.168.1.11:3000/api/auth/update-profile",
           { avatar: imageUrl },
           {
             headers: { Authorization: `Bearer ${parsedToken.token}` },
