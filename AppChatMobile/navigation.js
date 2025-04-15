@@ -51,7 +51,7 @@ function HomeTabs() {
             case "Inbox":
               return <Icon name="chatbox-ellipses-outline" size={size} color={color} />;
             case "Contact":
-              return <Icon name="cart-outline" size={size} color={color} />;
+              return <Icon name="people-outline" size={size} color={color} />;
             case "Explore":
               return <Icon name="heart" size={size} color={color} />;
             case "Memory":
@@ -70,8 +70,8 @@ function HomeTabs() {
     >
       <Tab.Screen name="Inbox" component={Inbox} />
       <Tab.Screen name="Contact" component={Contact} />
-      <Tab.Screen name="Explore" component={Explore} />
-      <Tab.Screen name="Memory" component={Memory} />
+      {/* <Tab.Screen name="Explore" component={Explore} />
+      <Tab.Screen name="Memory" component={Memory} /> */}
       <Tab.Screen name="Account" component={Account} />
     </Tab.Navigator>
   );

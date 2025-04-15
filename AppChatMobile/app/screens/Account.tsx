@@ -6,14 +6,15 @@ import {
   Image,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
+  
 } from "react-native";
+import { BASE_URL } from "../config/config";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
-
+import { SafeAreaView } from "react-native-safe-area-context";
 const CLOUDINARY_UPLOAD_PRESET = "ml_default";
 const CLOUDINARY_CLOUD_NAME = "dbjqhaayj";
 const CLOUDINARY_API =
@@ -38,7 +39,7 @@ const AccountScreen = () => {
           if (!parsedToken) return;
   
           const response = await axios.get(
-            "http://192.168.1.11:3000/api/auth/check",
+            `${BASE_URL}/api/auth/check`,
             {
               headers: {
                 Authorization: `Bearer ${parsedToken.token}`,
@@ -86,7 +87,7 @@ const AccountScreen = () => {
         const token = await AsyncStorage.getItem("token");
         const parsedToken = JSON.parse(token);
         await axios.put(
-          "http://192.168.1.11:3000/api/auth/update-profile",
+         `${BASE_URL}/api/auth/update-profile`,
           { avatar: imageUrl },
           {
             headers: { Authorization: `Bearer ${parsedToken.token}` },

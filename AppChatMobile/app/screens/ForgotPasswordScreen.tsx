@@ -9,7 +9,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import axios from 'axios';
-
+import { BASE_URL } from "../config/config";
 export function ForgotPasswordScreen({ navigation }) {
   const [step, setStep] = useState(1);
   const [phone, setPhone] = useState('');
@@ -24,7 +24,7 @@ export function ForgotPasswordScreen({ navigation }) {
     }
 
     try {
-      const res = await axios.post('http://192.168.1.11:3000/api/auth/send-forgot-otp', { phone });
+      const res = await axios.post(`${BASE_URL}/api/auth/send-forgot-otp`, { phone });
       Alert.alert('Thành công', res.data.message);
       setStep(2);
     } catch (error) {
@@ -40,7 +40,7 @@ export function ForgotPasswordScreen({ navigation }) {
     }
 
     try {
-      const res = await axios.post('http://192.168.1.11:3000/api/auth/verify-otp', {
+      const res = await axios.post(`${BASE_URL}/api/auth/verify-otp`, {
         phone,
         code: otp,
       });
@@ -60,7 +60,7 @@ export function ForgotPasswordScreen({ navigation }) {
     }
 
     try {
-      await axios.post('http://192.168.1.11:3000/api/auth/reset-password', {
+      await axios.post(`${BASE_URL}/api/auth/reset-password`, {
         resetToken,
         newPassword,
       });

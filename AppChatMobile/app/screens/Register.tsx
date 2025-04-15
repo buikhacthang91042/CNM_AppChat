@@ -12,6 +12,7 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
+import { BASE_URL } from "../config/config";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { useRegister } from "../context/RegisterContext";
@@ -58,7 +59,7 @@ export function Register() {
       }
 
       const res = await axios.post(
-        "http://192.168.1.11:3000/api/auth/send-otp",
+        `${BASE_URL}/api/auth/send-otp`,
         {
           phone: formattedPhone,
         }
@@ -83,7 +84,7 @@ export function Register() {
     try {
       setVerifying(true);
 
-      const res = await axios.post("http://192.168.1.11:3000/api/auth/verify-signup", {
+      const res = await axios.post(`${BASE_URL}/api/auth/verify-signup`, {
         phone:formData.phone,
         code: otpCode,
         name: formData.name,

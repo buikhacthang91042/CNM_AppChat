@@ -11,6 +11,7 @@ import {
   Alert,
   ImageBackground,
 } from "react-native";
+import { BASE_URL } from "../config/config";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Formik } from "formik";
 import * as SplashScreen from "expo-splash-screen";
@@ -58,7 +59,7 @@ export default function LoginScreen() {
 
     try {
       const response = await axios.post(
-        "http://192.168.1.11:3000/api/auth/login",
+       `${BASE_URL}/api/auth/login`,
         {
           phone,
           password,

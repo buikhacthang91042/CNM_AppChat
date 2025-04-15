@@ -11,7 +11,7 @@ import { ImageBackground } from "react-native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
-
+import { BASE_URL } from "../config/config";
 const AddFriendScreen = () => {
   const navigation = useNavigation();
 
@@ -31,7 +31,7 @@ const AddFriendScreen = () => {
       const token = await AsyncStorage.getItem("token");
       const parsedToken = JSON.parse(token);
       const response = await axios.post(
-        "http://192.168.1.11:3000/api/auth/find-user-by-phone",
+       `${BASE_URL}/api/auth/find-user-by-phone`,
         { phone: formattedPhone },
         {
           headers: {

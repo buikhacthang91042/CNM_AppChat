@@ -17,7 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import socket from "../config/socket";
-
+import { BASE_URL } from "../config/config";
 export default function Home() {
   const [search, setSearch] = useState("");
   const [chats, setChats] = useState([]);
@@ -44,7 +44,7 @@ export default function Home() {
       const parsedToken = JSON.parse(token);
 
       const response = await axios.get(
-        "http://192.168.1.11:3000/api/chat/list",
+        `${BASE_URL}/api/chat/list`,
         {
           headers: {
             Authorization: `Bearer ${parsedToken.token}`,
@@ -52,7 +52,7 @@ export default function Home() {
         }
       );
 
-      console.log("Chats fetched:", response.data.chats); // Debug
+      console.log("Chats fetched:", response.data.chats); 
       setChats(response.data.chats);
     } catch (error) {
       console.error("Lỗi lấy danh sách chat:", error);
@@ -83,12 +83,14 @@ export default function Home() {
             receiverId: otherParticipant?._id,
             name: otherParticipant?.name,
             currentUserId: item.currentUserId,
-          }); // Debug
+          }); 
           navigation.navigate("ChatScreen", {
             chatId: item.chatId,
             receiverId: otherParticipant?._id,
             name: otherParticipant?.name || "Unknown",
+            avatar: otherParticipant?.avatar || "https://via.placeholder.com/50",
             currentUserId: item.currentUserId,
+            
           });
         }}
       >
@@ -100,7 +102,13 @@ export default function Home() {
           <Text style={{ fontSize: 16, fontWeight: "600", color: "#222" }}>
             {item.name}
           </Text>
-          <Text style={{ color: "#666", marginTop: 2 }}>
+          <Text
+            style={[{fontSize: 14,
+              color: "#666",},
+              
+              item.hasUnread && { fontWeight: "bold", color: "#000" },
+            ]}
+          >
             {item.lastMessage}
           </Text>
         </View>

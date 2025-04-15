@@ -13,7 +13,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
-
+import { BASE_URL } from "../config/config";
 const EditProfileScreen = ({ route, navigation }) => {
   const { userInfo } = route.params;
 
@@ -115,7 +115,7 @@ const EditProfileScreen = ({ route, navigation }) => {
       const parsedToken = JSON.parse(token);
   
       const response = await axios.put(
-        "http://192.168.1.11:3000/api/auth/update-profile",
+        `${BASE_URL}/api/auth/update-profile`,
         updatedData,
         {
           headers: { Authorization: `Bearer ${parsedToken.token}` },

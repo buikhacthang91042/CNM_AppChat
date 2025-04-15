@@ -9,29 +9,37 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import React, { useEffect, useState } from "react";
-
+import React, { useEffect, useState, useCallback } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
+import { BASE_URL } from "../config/config";
 export default function Contact() {
   const [requests, setRequests] = useState([]);
   const [friends, setFriends] = useState([]);
   const [selectedTab, setSelectedTab] = useState("requests");
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (selectedTab === "requests") {
-      fetchFriendRequests();
-    } else {
-      fetchFriends();
-    }
-  }, [selectedTab]);
+  useFocusEffect(
+    useCallback(() => {
+      if (selectedTab === "requests") {
+        fetchFriendRequests();
+      } else {
+        fetchFriends();
+      }
+    }, [selectedTab])
+  );
+
+ 
 
   const fetchFriendRequests = async () => {
     try {
+      setIsLoading(true);
       const token = await AsyncStorage.getItem("token");
       if (!token) throw new Error("Không tìm thấy token");
       const parsedToken = JSON.parse(token);
 
       const response = await axios.get(
-        "http://192.168.1.11:3000/api/friends/requests",
+       `${BASE_URL}/api/friends/requests`,
         {
           headers: {
             Authorization: `Bearer ${parsedToken.token}`,
@@ -39,21 +47,26 @@ export default function Contact() {
         }
       );
 
+      console.log("Friend requests:", response.data.requests);
       setRequests(response.data.requests);
+      fetchFriends();
     } catch (error) {
       console.error("Lỗi lấy lời mời:", error);
       Alert.alert("Lỗi", "Không thể lấy danh sách lời mời.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const fetchFriends = async () => {
     try {
+      setIsLoading(true);
       const token = await AsyncStorage.getItem("token");
       if (!token) throw new Error("Không tìm thấy token");
       const parsedToken = JSON.parse(token);
 
       const response = await axios.get(
-        "http://192.168.1.11:3000/api/friends/list",
+       `${BASE_URL}/api/friends/list`,
         {
           headers: {
             Authorization: `Bearer ${parsedToken.token}`,
@@ -61,21 +74,26 @@ export default function Contact() {
         }
       );
 
+      console.log("Friends:", response.data);
       setFriends(response.data);
+     
     } catch (error) {
       console.error("Lỗi lấy bạn bè:", error);
       Alert.alert("Lỗi", "Không thể lấy danh sách bạn bè.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const acceptRequest = async (senderId) => {
     try {
+      setIsLoading(true);
       const token = await AsyncStorage.getItem("token");
       if (!token) throw new Error("Không tìm thấy token");
       const parsedToken = JSON.parse(token);
 
       await axios.post(
-        "http://192.168.1.11:3000/api/friends/accept-request",
+       `${BASE_URL}/api/friends/accept-request`,
         { senderId },
         {
           headers: {
@@ -85,24 +103,28 @@ export default function Contact() {
       );
 
       Alert.alert("Thành công", "Đã chấp nhận lời mời.");
-      fetchFriendRequests(); // Cập nhật danh sách lời mời
+      fetchFriendRequests();
+      fetchFriends();
     } catch (error) {
       console.error("Lỗi chấp nhận:", error.response?.data);
       Alert.alert(
         "Lỗi",
         error.response?.data?.message || "Không thể chấp nhận lời mời."
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const rejectRequest = async (senderId) => {
     try {
+      setIsLoading(true);
       const token = await AsyncStorage.getItem("token");
       if (!token) throw new Error("Không tìm thấy token");
       const parsedToken = JSON.parse(token);
 
       await axios.post(
-        "http://192.168.1.11:3000/api/friends/reject-request",
+        `${BASE_URL}/api/friends/reject-request`,
         { senderId },
         {
           headers: {
@@ -112,13 +134,15 @@ export default function Contact() {
       );
 
       Alert.alert("Thành công", "Đã từ chối lời mời.");
-      fetchFriendRequests(); // Cập nhật danh sách lời mời
+      fetchFriendRequests();
     } catch (error) {
       console.error("Lỗi từ chối:", error.response?.data);
       Alert.alert(
         "Lỗi",
         error.response?.data?.message || "Không thể từ chối lời mời."
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -161,52 +185,68 @@ export default function Contact() {
         />
         <View style={styles.infoContainer}>
           <Text style={styles.senderName}>{item.name}</Text>
+          <Text>{item.phone}</Text>
         </View>
       </View>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      {/* Tabs */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            selectedTab === "requests" && styles.activeTab,
-          ]}
-          onPress={() => setSelectedTab("requests")}
-        >
-          <Text style={styles.tabText}>Lời mời</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            selectedTab === "friends" && styles.activeTab,
-          ]}
-          onPress={() => setSelectedTab("friends")}
-        >
-          <Text style={styles.tabText}>Bạn bè</Text>
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              selectedTab === "requests" && styles.activeTab,
+            ]}
+            onPress={() => setSelectedTab("requests")}
+          >
+            <Text style={styles.tabText}>
+              Lời mời {requests.length > 0 ? `(${requests.length})` : ""}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              selectedTab === "friends" && styles.activeTab,
+            ]}
+            onPress={() => setSelectedTab("friends")}
+          >
+            <Text style={styles.tabText}>
+              Bạn bè {friends.length > 0 ? `(${friends.length})` : ""}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-      <FlatList
-        data={selectedTab === "requests" ? requests : friends}
-        keyExtractor={(item) => item._id}
-        renderItem={selectedTab === "requests" ? renderRequestItem : renderFriendItem}
-        ListEmptyComponent={
-          <Text style={styles.noRequests}>
-            {selectedTab === "requests"
-              ? "Không có lời mời nào."
-              : "Bạn chưa có bạn bè nào."}
-          </Text>
-        }
-      />
-    </View>
+        {isLoading ? (
+          <Text style={styles.noRequests}>Đang tải...</Text>
+        ) : (
+          <FlatList
+            data={selectedTab === "requests" ? requests : friends}
+            keyExtractor={(item) => item._id}
+            renderItem={
+              selectedTab === "requests" ? renderRequestItem : renderFriendItem
+            }
+            ListEmptyComponent={
+              <Text style={styles.noRequests}>
+                {selectedTab === "requests"
+                  ? "Không có lời mời nào."
+                  : "Bạn chưa có bạn bè nào."}
+              </Text>
+            }
+          />
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
   container: {
     flex: 1,
     padding: 24,

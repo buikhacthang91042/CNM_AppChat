@@ -18,8 +18,7 @@
       "backgroundColor": "#ffffff",
       "assets": [
         "./assets/fonts"
-      ],
-      
+      ]
     },
     "ios": {
       "supportsTablet": true,
@@ -56,12 +55,12 @@
     "plugins": [
       "expo-facebook",
       "expo-font"
+      
     ],
     "extra": {
       "eas": {
         "projectId": "406360ff-f6b1-434a-82f4-03568ebed8fe"
       }
-    },
-    
+    }
   }
 }

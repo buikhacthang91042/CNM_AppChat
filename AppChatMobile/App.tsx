@@ -23,7 +23,6 @@ export default function App() {
       } catch (error) {
         console.error('Lỗi hiển thị thông báo:', error);
       }
-
     });
 
     socket.on('friend_request_accepted', (data) => {
@@ -34,17 +33,26 @@ export default function App() {
       );
     });
 
+    socket.on('friend_request_rejected', (data) => {
+      console.log(" Lời mời kết bạn đã bị từ chối:", data);
+      Alert.alert(
+        "❌ Lời mời bị từ chối",
+        `${data.receiver.name} đã từ chối lời mời kết bạn của bạn.`
+      );
+    });
+
     return () => {
       socket.off('new_friend_request');
       socket.off('friend_request_accepted');
+      socket.off('friend_request_rejected');
     };
   }, []);
 
   return (
     <GestureHandlerRootView style={styles.container}>
-       <RegisterProvider>
-      <StatusBar style="auto" />
-      <Navigation />
+      <RegisterProvider>
+        <StatusBar style="auto" />
+        <Navigation />
       </RegisterProvider>
     </GestureHandlerRootView>
   );

@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { BASE_URL } from "../config/config";
 const UserProfileScreen = ({ route }) => {
   const { user } = route.params;
   const [isRequestSent, setIsRequestSent] = useState(false);
@@ -26,7 +26,7 @@ const UserProfileScreen = ({ route }) => {
       if (!token) throw new Error('Không tìm thấy token');
       const parsedToken = JSON.parse(token);
 
-      const response = await axios.get('http://192.168.1.11:3000/api/friends/list', {
+      const response = await axios.get(`${BASE_URL}/api/friends/list`, {
         headers: { Authorization: `Bearer ${parsedToken.token}` },
       });
 
@@ -45,7 +45,7 @@ const UserProfileScreen = ({ route }) => {
       if (!token) throw new Error('Không tìm thấy token');
       const parsedToken = JSON.parse(token);
 
-      const response = await axios.get('http://192.168.1.11:3000/api/friends/sent-requests', {
+      const response = await axios.get(`${BASE_URL}/api/friends/sent-requests`, {
         headers: { Authorization: `Bearer ${parsedToken.token}` },
       });
 
@@ -67,7 +67,7 @@ const UserProfileScreen = ({ route }) => {
       const parsedToken = JSON.parse(token);
 
       await axios.post(
-        'http://192.168.1.11:3000/api/friends/send-request',
+        `${BASE_URL}/api/friends/send-request`,
         { receiverId: user.id },
         { headers: { Authorization: `Bearer ${parsedToken.token}` } }
       );
@@ -88,7 +88,7 @@ const UserProfileScreen = ({ route }) => {
       const parsedToken = JSON.parse(token);
 
       await axios.post(
-        'http://192.168.1.11:3000/api/friends/cancel-request',
+       `${BASE_URL}/api/friends/cancel-request`,
         { receiverId: user.id },
         { headers: { Authorization: `Bearer ${parsedToken.token}` } }
       );

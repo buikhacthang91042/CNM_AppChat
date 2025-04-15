@@ -18,7 +18,6 @@ const userShema = new mongoose.Schema({
     password: {
       type: String,
       required: true,
-      select:false
     },
     avatar: {
       type: String,
@@ -34,7 +33,8 @@ const userShema = new mongoose.Schema({
     createAt: {
       type: Date,
       default: Date.now
-    }
+    },
+     
   });
 const User = mongoose.model('user',userShema);
 

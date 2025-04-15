@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-
+import { BASE_URL } from "../config/config";
 const UpdatePassword = ({ navigation }) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -53,7 +53,7 @@ const UpdatePassword = ({ navigation }) => {
       }
 
       const response = await axios.post(
-        'http://192.168.1.11:3000/api/auth/update-password',
+        `${BASE_URL}/api/auth/update-password`,
         {
           currentPassword,
           newPassword,
