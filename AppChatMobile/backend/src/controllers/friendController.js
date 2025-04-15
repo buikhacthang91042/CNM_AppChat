@@ -191,3 +191,36 @@ exports.canSendMessage = async (req, res) => {
     res.status(500).json({ message: 'Lỗi server' });
   }
 };
+exports.rejectFriendRequest = async (req, res) => {
+  const receiverId = req.user._id; // Người nhận lời mời (User B)
+  const { senderId } = req.body; // Người gửi lời mời (User A)
+
+  try {
+    // Tìm và xóa bản ghi Friendship với userId1 là senderId và userId2 là receiverId
+    const deleted = await Friendship.findOneAndDelete({
+      userId1: senderId,
+      userId2: receiverId,
+      status: 'pending',
+    });
+
+    if (!deleted) {
+      return res.status(404).json({ message: 'Không tìm thấy lời mời để từ chối' });
+    }
+
+    // Gửi thông báo realtime cho người gửi (User A) nếu họ online
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const senderSocket = onlineUsers.get(senderId.toString());
+
+    if (senderSocket) {
+      io.to(senderSocket).emit('friend_request_rejected', {
+        receiver: await User.findById(receiverId).select('name avatar'),
+      });
+    }
+
+    res.status(200).json({ message: 'Đã từ chối lời mời kết bạn' });
+  } catch (error) {
+    console.error('Lỗi từ chối lời mời:', error.message);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};

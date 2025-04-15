@@ -10,4 +10,5 @@ router.get("/requests", auth, friendController.getFriendRequests);
 router.post("/accept-request", auth, friendController.acceptFriendRequest);
 router.get("/list", auth, friendController.getFriends);
 router.get('/sent-requests', auth, friendController.getSentFriendRequests);
+router.post('/reject-request', auth, friendController.rejectFriendRequest);
 module.exports = router;
