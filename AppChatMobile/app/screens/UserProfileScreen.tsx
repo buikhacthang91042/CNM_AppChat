@@ -10,15 +10,39 @@ import {
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../config/config";
+
 const UserProfileScreen = ({ route }) => {
   const { user } = route.params;
   const [isRequestSent, setIsRequestSent] = useState(false);
   const [isFriend, setIsFriend] = useState(false);
+  const [isSelf, setIsSelf] = useState(false);
 
   useEffect(() => {
+    checkCurrentUser();
     checkFriendStatus();
     checkRequestStatus();
   }, []);
+
+  const checkCurrentUser = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) throw new Error('Không tìm thấy token');
+      const parsedToken = JSON.parse(token);
+      console.log('Token structure:', parsedToken); // Debug
+
+      // Giải mã JWT payload
+      const base64Url = parsedToken.token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(base64));
+      const currentUserId = payload.userId || payload._id || payload.sub || payload.id || payload.user_id;
+      if (!currentUserId) throw new Error('Không tìm thấy ID người dùng trong token');
+
+      setIsSelf(currentUserId === user.id);
+    } catch (error) {
+      console.error('Lỗi kiểm tra người dùng hiện tại:', error.message);
+      Alert.alert('Lỗi', 'Không thể xác định người dùng hiện tại.');
+    }
+  };
 
   const checkFriendStatus = async () => {
     try {
@@ -66,6 +90,18 @@ const UserProfileScreen = ({ route }) => {
       if (!token) throw new Error('Không tìm thấy token');
       const parsedToken = JSON.parse(token);
 
+      // Giải mã JWT payload
+      const base64Url = parsedToken.token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(base64));
+      const currentUserId = payload.userId || payload._id || payload.sub || payload.id || payload.user_id;
+      if (!currentUserId) throw new Error('Không tìm thấy ID người dùng trong token');
+
+      if (currentUserId === user.id) {
+        Alert.alert('Thông báo', 'Không thể kết bạn với chính mình.');
+        return;
+      }
+
       await axios.post(
         `${BASE_URL}/api/friends/send-request`,
         { receiverId: user.id },
@@ -88,7 +124,7 @@ const UserProfileScreen = ({ route }) => {
       const parsedToken = JSON.parse(token);
 
       await axios.post(
-       `${BASE_URL}/api/friends/cancel-request`,
+        `${BASE_URL}/api/friends/cancel-request`,
         { receiverId: user.id },
         { headers: { Authorization: `Bearer ${parsedToken.token}` } }
       );
@@ -112,7 +148,11 @@ const UserProfileScreen = ({ route }) => {
       <Text style={styles.info}>SĐT: {user.phone}</Text>
       <Text>Ngày sinh: {user.dob}</Text>
 
-      {isFriend ? (
+      {isSelf ? (
+        <TouchableOpacity style={[styles.button, { backgroundColor: '#6C757D' }]} disabled>
+          <Text style={styles.buttonText}>Đây là bạn</Text>
+        </TouchableOpacity>
+      ) : isFriend ? (
         <TouchableOpacity style={[styles.button, { backgroundColor: '#6C757D' }]} disabled>
           <Text style={styles.buttonText}>Đã là bạn bè</Text>
         </TouchableOpacity>
@@ -129,6 +169,7 @@ const UserProfileScreen = ({ route }) => {
     </View>
   );
 };
+
 export default UserProfileScreen;
 
 const styles = StyleSheet.create({

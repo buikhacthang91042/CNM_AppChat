@@ -242,8 +242,8 @@ exports.sendFile = async (req, res) => {
   try {
     const { chatId, receiverId } = req.body;
 
-    console.log("Request body:", req.body); // Debug
-    console.log("Request file:", req.file); // Debug
+    console.log("Request body:", req.body); 
+    console.log("Request file:", req.file); 
 
     if (!req.user || !req.user._id) {
       return res.status(401).json({ message: "Không tìm thấy người dùng. Vui lòng đăng nhập lại." });
@@ -265,7 +265,7 @@ exports.sendFile = async (req, res) => {
     };
 
     const uploadResult = await s3.upload(params).promise();
-    console.log("File uploaded to S3:", uploadResult.Location); // Debug
+    console.log("File uploaded to S3:", uploadResult.Location); 
 
     const newMessage = new Message({
       messageId: uuidv4(),
@@ -280,7 +280,7 @@ exports.sendFile = async (req, res) => {
     });
 
     await newMessage.save();
-    console.log("Saved message:", newMessage); // Debug
+    console.log("Saved message:", newMessage); 
 
     req.app.get("io").to(chatId).emit("new_message", { message: newMessage });
 
