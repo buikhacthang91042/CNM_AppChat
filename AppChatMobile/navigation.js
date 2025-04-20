@@ -3,7 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React ,{ useEffect }from 'react';
 
-import Inbox from './app/screens/Inbox';
+import Inbox from './app/screens/Home';
 import { Login } from './app/screens/Login';
 import { Register } from './app/screens/Register';
 import Account from './app/screens/Account';
@@ -18,6 +18,9 @@ import AddFriend from './app/screens/AddFriendScreen';
 import UserProfile from './app/screens/UserProfileScreen';
 import Icon from "react-native-vector-icons/Ionicons";
 import ChatScreen from './app/screens/ChatScreen';
+import GroupManagement from './app/screens/GroupManagement';
+import AddGroupMember from './app/screens/AddGroupMember';
+import CreateGroup from './app/screens/CreateGroup';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -37,6 +40,9 @@ export default function Navigation() {
         <Stack.Screen name="AddFriend" component={AddFriend} />
         <Stack.Screen name="UserProfile" component={UserProfile} />
         <Stack.Screen name="ChatScreen" component={ChatScreen} />
+        <Stack.Screen name="GroupManagement" component={GroupManagement} />
+        <Stack.Screen name="AddGroupMember" component={AddGroupMember} />
+        <Stack.Screen name="CreateGroup" component={CreateGroup} />
       </Stack.Navigator>
     </NavigationContainer>
   );

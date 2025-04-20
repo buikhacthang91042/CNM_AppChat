@@ -407,6 +407,18 @@ const changePassword = async (req, res) => {
   }
 };
 
+const getUsers = async (req, res) => {
+  try {
+    // Lấy danh sách tất cả người dùng, trừ người dùng hiện tại
+    const users = await User.find({ _id: { $ne: req.user._id } }).select(
+      "_id name avatar phone"
+    );
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Lỗi lấy danh sách người dùng:", error);
+    res.status(500).json({ message: "Lỗi server", error: error.message });
+  }
+};
 module.exports = {
   sendSignupOTP,
   verifyAndSignup,
@@ -420,4 +432,5 @@ module.exports = {
   verifyForgotPasswordOTP,
   sendForgotPasswordOTP,
   updateUserImg,
+  getUsers
 };

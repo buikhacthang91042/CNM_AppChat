@@ -22,12 +22,12 @@ import { BASE_URL } from "../config/config";
 import EmojiModal from "react-native-emoji-modal";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
+import { useNavigation } from "@react-navigation/native";
 
-// Interface cho tin nhắn
 interface Message {
   messageId: string;
   chatId: string;
-  senderId: { _id: string; name?: string };
+  senderId: { _id: string; name?: string; avatar?: string };
   content: string;
   fileUrl?: string;
   fileName?: string;
@@ -40,12 +40,14 @@ interface Message {
 }
 
 export default function ChatScreen({ route }) {
-  const { chatId, receiverId, name, currentUserId, avatar } = route.params;
+  const { chatId, receiverId, name, currentUserId, avatar: initialAvatar, isGroupChat } = route.params;
   const [messages, setMessages] = useState<Message[]>([]);
   const [content, setContent] = useState("");
   const [selectedFile, setSelectedFile] = useState<{ name: string; uri: string; mimeType: string } | null>(null);
+  const [avatar, setAvatar] = useState(initialAvatar || "https://via.placeholder.com/50"); // Thêm state cho avatar
   const flatListRef = useRef<FlatList>(null);
   const [showEmojiModal, setShowEmojiModal] = useState(false);
+  const navigation = useNavigation();
 
   useEffect(() => {
     fetchMessages();
@@ -72,9 +74,28 @@ export default function ChatScreen({ route }) {
       }
     });
 
+    socket.on("group_member_added", fetchMessages);
+    socket.on("group_member_removed", fetchMessages);
+    socket.on("group_dissolved", () => {
+      Alert.alert("Thông báo", "Nhóm đã được giải tán.");
+      navigation.navigate("Home");
+    });
+
+    // Lắng nghe sự kiện group_avatar_updated
+    socket.on("group_avatar_updated", (data: { chatId: string; avatar: string }) => {
+      if (data.chatId === chatId) {
+        console.log("Received group_avatar_updated:", data); // Thêm log để debug
+        setAvatar(data.avatar ? `${data.avatar}?t=${Date.now()}` : "https://via.placeholder.com/50");
+      }
+    });
+
     markMessageAsRead();
     return () => {
       socket.off("new_message");
+      socket.off("group_member_added");
+      socket.off("group_member_removed");
+      socket.off("group_dissolved");
+      socket.off("group_avatar_updated");
     };
   }, [chatId]);
 
@@ -213,14 +234,14 @@ export default function ChatScreen({ route }) {
       const token = await AsyncStorage.getItem("token");
       if (!token) throw new Error("Không tìm thấy token");
       const parsedToken = JSON.parse(token);
-  
+
       if (selectedFile) {
         const formData = new FormData();
         formData.append("chatId", chatId);
-        formData.append("receiverId", receiverId);
-  
-        console.log("Selected file:", selectedFile); // Debug
-  
+        if (!isGroupChat) {
+          formData.append("receiverId", receiverId);
+        }
+
         const file = {
           uri: Platform.OS === "android" && !selectedFile.uri.startsWith("file://")
             ? `file://${selectedFile.uri}`
@@ -228,8 +249,8 @@ export default function ChatScreen({ route }) {
           type: selectedFile.mimeType || "application/octet-stream",
           name: selectedFile.name || "file",
         };
-  
-        let endpoint = `${BASE_URL}/api/chat/send`; // Mặc định endpoint
+
+        let endpoint = `${BASE_URL}/api/chat/send`;
         if (selectedFile.mimeType.startsWith("image/")) {
           formData.append("image", file);
           formData.append("content", "[Image]");
@@ -237,25 +258,21 @@ export default function ChatScreen({ route }) {
           formData.append("video", file);
           formData.append("content", "[Video]");
         } else {
-          endpoint = `${BASE_URL}/api/chat/send-file`; // Chuyển sang endpoint send-file cho tệp thông thường
-          formData.append("file", file); // Đảm bảo gửi đúng key 'file'
+          endpoint = `${BASE_URL}/api/chat/send-file`;
+          formData.append("file", file);
         }
-  
-        console.log("Sending to endpoint:", endpoint); // Debug endpoint
-        console.log("FormData prepared:", formData); // Debug
-  
+
         const response = await axios.post(endpoint, formData, {
           headers: {
             Authorization: `Bearer ${parsedToken.token}`,
             "Content-Type": "multipart/form-data",
           },
         });
-        console.log("Response:", response.data); // Debug
         setSelectedFile(null);
       } else if (content.trim()) {
         await axios.post(
           `${BASE_URL}/api/chat/send`,
-          { chatId, content, receiverId },
+          { chatId, content, receiverId: isGroupChat ? null : receiverId },
           {
             headers: { Authorization: `Bearer ${parsedToken.token}` },
           }
@@ -263,7 +280,7 @@ export default function ChatScreen({ route }) {
       } else {
         return;
       }
-  
+
       setContent("");
       fetchMessages();
       setTimeout(() => {
@@ -323,7 +340,7 @@ export default function ChatScreen({ route }) {
 
   const renderMessage = ({ item }: { item: Message }) => {
     const isRecalled = item.isRecalled || item.content === "Tin nhắn đã được thu hồi";
-
+    const isCurrentUser = item.senderId._id === currentUserId;
     const handleLongPress = () => {
       if (item.senderId._id === currentUserId && !isRecalled) {
         Alert.alert(
@@ -345,100 +362,137 @@ export default function ChatScreen({ route }) {
       <TouchableOpacity onLongPress={handleLongPress}>
         <View
           style={{
+            flexDirection: "row",
             marginBottom: 10,
-            alignSelf: item.senderId._id === currentUserId ? "flex-end" : "flex-start",
-            backgroundColor: item.senderId._id === currentUserId ? "#007AFF" : "#f0f0f0",
-            padding: 10,
-            borderRadius: 10,
-            maxWidth: "70%",
+            alignSelf: isCurrentUser ? "flex-end" : "flex-start",
+            maxWidth: "80%",
+            alignItems: "flex-end",
           }}
         >
-          {isRecalled ? (
-            <Text
-              style={{
-                color: item.senderId._id === currentUserId ? "#fff" : "#333",
-                fontStyle: "italic",
-              }}
-            >
-              Tin nhắn đã được thu hồi
-            </Text>
-          ) : item.image ? (
+          {!isCurrentUser && (
             <Image
-              source={{ uri: item.image }}
+              source={{ uri: item.senderId.avatar || "https://via.placeholder.com/50" }}
               style={{
-                width: 200,
-                height: 200,
-                borderRadius: 10,
+                width: 30,
+                height: 30,
+                borderRadius: 15,
+                marginRight: 8,
                 marginBottom: 5,
               }}
-              resizeMode="cover"
             />
-          ) : item.video ? (
-            <TouchableOpacity
-              onPress={() => {
-                if (item.video) {
-                  Linking.openURL(item.video).catch((err) =>
-                    Alert.alert("Lỗi", "Không thể mở video.")
-                  );
-                }
-              }}
-            >
-              <Text
-                style={{
-                  color: item.senderId._id === currentUserId ? "#fff" : "#333",
-                  fontStyle: "normal",
-                  textDecorationLine: "underline",
-                }}
-              >
-                Video
-              </Text>
-            </TouchableOpacity>
-          ) : item.fileUrl ? (
-            <TouchableOpacity
-              onPress={() => {
-                if (item.fileUrl) {
-                  Linking.openURL(item.fileUrl).catch((err) =>
-                    Alert.alert("Lỗi", "Không thể mở tệp.")
-                  );
-                }
-              }}
-            >
-              <Text
-                style={{
-                  color: item.senderId._id === currentUserId ? "#fff" : "#333",
-                  fontStyle: "normal",
-                  textDecorationLine: "underline",
-                }}
-              >
-                Tệp: {item.fileName}
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <Text
-              style={{
-                color: item.senderId._id === currentUserId ? "#fff" : "#333",
-                fontStyle: "normal",
-              }}
-            >
-              {item.content}
-            </Text>
           )}
-          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 5 }}>
-            <Text
-              style={{
-                fontSize: 10,
-                color: item.senderId._id === currentUserId ? "#ddd" : "#888",
-                marginRight: 5,
-              }}
-            >
-              {new Date(item.createdAt).toLocaleTimeString()}
-            </Text>
-            {item.senderId._id === currentUserId && !isRecalled && (
-              <Text style={{ fontSize: 10, color: "#ddd" }}>
-                {item.isRead ? "Đã đọc" : item.isDelivered ? "Đã gửi" : "Đang gửi"}
+          <View
+            style={{
+              backgroundColor: isCurrentUser ? "#007AFF" : "#f0f0f0",
+              padding: 10,
+              borderRadius: 10,
+              maxWidth: "90%",
+            }}
+          >
+            {isGroupChat && !isCurrentUser && (
+              <Text style={{ fontSize: 12, color: "#666", marginBottom: 5 }}>
+                {item.senderId.name}
               </Text>
             )}
+            {isRecalled ? (
+              <Text
+                style={{
+                  color: isCurrentUser ? "#fff" : "#333",
+                  fontStyle: "italic",
+                }}
+              >
+                Tin nhắn đã được thu hồi
+              </Text>
+            ) : item.image ? (
+              <Image
+                source={{ uri: item.image }}
+                style={{
+                  width: 200,
+                  height: 200,
+                  borderRadius: 10,
+                  marginBottom: 5,
+                }}
+                resizeMode="cover"
+              />
+            ) : item.video ? (
+              <TouchableOpacity
+                onPress={() => {
+                  if (item.video) {
+                    Linking.openURL(item.video).catch((err) =>
+                      Alert.alert("Lỗi", "Không thể mở video.")
+                    );
+                  }
+                }}
+              >
+                <Text
+                  style={{
+                    color: isCurrentUser ? "#fff" : "#333",
+                    fontStyle: "normal",
+                    textDecorationLine: "underline",
+                  }}
+                >
+                  Video
+                </Text>
+              </TouchableOpacity>
+            ) : item.fileUrl ? (
+              <TouchableOpacity
+                onPress={() => {
+                  if (item.fileUrl) {
+                    Linking.openURL(item.fileUrl).catch((err) =>
+                      Alert.alert("Lỗi", "Không thể mở tệp.")
+                    );
+                  }
+                }}
+              >
+                <Text
+                  style={{
+                    color: isCurrentUser ? "#fff" : "#333",
+                    fontStyle: "normal",
+                    textDecorationLine: "underline",
+                  }}
+                >
+                  Tệp: {item.fileName}
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <Text
+                style={{
+                  color: isCurrentUser ? "#fff" : "#333",
+                  fontStyle: "normal",
+                }}
+              >
+                {item.content}
+              </Text>
+            )}
+            <View style={{ flexDirection: "row", alignItems: "center", marginTop: 5 }}>
+              <Text
+                style={{
+                  fontSize: 10,
+                  color: isCurrentUser ? "#ddd" : "#888",
+                  marginRight: 5,
+                }}
+              >
+                {new Date(item.createdAt).toLocaleTimeString()}
+              </Text>
+              {isCurrentUser && !isRecalled && (
+                <Text style={{ fontSize: 10, color: "#ddd" }}>
+                  {item.isRead ? "Đã đọc" : item.isDelivered ? "Đã gửi" : "Đang gửi"}
+                </Text>
+              )}
+            </View>
           </View>
+          {isCurrentUser && (
+            <Image
+              source={{ uri: item.senderId.avatar || "https://via.placeholder.com/50" }}
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: 15,
+                marginLeft: 8,
+                marginBottom: 5,
+              }}
+            />
+          )}
         </View>
       </TouchableOpacity>
     );
@@ -462,10 +516,24 @@ export default function ChatScreen({ route }) {
       >
         <View style={styles.header}>
           <Image
-            source={{ uri: avatar || "https://via.placeholder.com/50" }}
+            source={{ uri: avatar || "https://via.placeholder.com/50" }} // Sử dụng state avatar
             style={styles.headerAvatar}
           />
           <Text style={styles.headerText}>{name}</Text>
+          {isGroupChat && (
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("GroupManagement", {
+                  chatId,
+                  groupName: name,
+                  currentUserId,
+                })
+              }
+              style={{ marginLeft: "auto" }}
+            >
+              <Ionicons name="settings-outline" size={24} color="#007AFF" />
+            </TouchableOpacity>
+          )}
         </View>
         <FlatList
           ref={flatListRef}

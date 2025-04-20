@@ -27,11 +27,16 @@ export default function Home() {
   useFocusEffect(
     useCallback(() => {
       fetchChats();
-  
+      
       socket.on("new_message", fetchChats);
-  
+      socket.on("new_group_created", fetchChats);
+      socket.on("group_dissolved", fetchChats);
+      socket.on("group_avatar_updated", fetchChats);
       return () => {
         socket.off("new_message", fetchChats);
+        socket.off("new_group_created", fetchChats);
+        socket.off("group_dissolved", fetchChats);
+        socket.off("group_avatar_updated",fetchChats);
       };
     }, [])
   );
@@ -78,19 +83,21 @@ export default function Home() {
           borderColor: "#f0f0f0",
         }}
         onPress={() => {
+          const chatName = item.name || (item.isGroupChat ? "Nhóm không tên" : otherParticipant?.name || "Unknown");
           console.log("Navigating to ChatScreen with:", {
             chatId: item.chatId,
-            receiverId: otherParticipant?._id,
-            name: otherParticipant?.name,
+            receiverId: item.isGroupChat ? null : otherParticipant?._id,
+            name: chatName,
             currentUserId: item.currentUserId,
-          }); 
+            isGroupChat: item.isGroupChat,
+          });
           navigation.navigate("ChatScreen", {
             chatId: item.chatId,
-            receiverId: otherParticipant?._id,
-            name: otherParticipant?.name || "Unknown",
-            avatar: otherParticipant?.avatar || "https://via.placeholder.com/50",
+            receiverId: item.isGroupChat ? null : otherParticipant?._id,
+            name: chatName,
+            avatar: item.avatar || "https://via.placeholder.com/50",
             currentUserId: item.currentUserId,
-            
+            isGroupChat: item.isGroupChat,
           });
         }}
       >
@@ -100,12 +107,11 @@ export default function Home() {
         />
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 16, fontWeight: "600", color: "#222" }}>
-            {item.name}
+            {item.name || (item.isGroupChat ? "Nhóm không tên" : otherParticipant?.name || "Unknown")}
           </Text>
           <Text
-            style={[{fontSize: 14,
-              color: "#666",},
-              
+            style={[
+              { fontSize: 14, color: "#666" },
               item.hasUnread && { fontWeight: "bold", color: "#000" },
             ]}
           >
@@ -124,7 +130,7 @@ export default function Home() {
     if (option === "addFriend") {
       navigation.navigate("AddFriend");
     } else if (option === "createGroup") {
-      alert("Tính năng Tạo nhóm đang phát triển...");
+      navigation.navigate("CreateGroup");
     }
     actionSheetRef.current?.hide();
   };
